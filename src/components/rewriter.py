@@ -3,8 +3,11 @@ import json
 import logging
 from typing import Dict, Any
 
+from pydantic import ValidationError
+
 from src.llm.client import LLMClient
 from src.core.config import settings
+from src.core.models import SceneSpec
 from src.llm.prompts import STORYBOARD_SYSTEM_PROMPT
 from src.utils.code_ops import extract_json
 from src.utils.logger import logger
@@ -48,11 +51,20 @@ class ScriptRewriter:
                     else:
                         raise ValueError("JSON output missing 'scenes' key")
                 
+                # Data Validation using Pydantic
+                validated_scenes = []
+                for scene in parsed_data["scenes"]:
+                    # This will raise ValidationError if data is invalid
+                    # model_dump() converts back to dict (Pydantic v2)
+                    validated_scenes.append(SceneSpec(**scene).model_dump())
+                
+                parsed_data["scenes"] = validated_scenes
+                
                 return parsed_data
 
-            except (json.JSONDecodeError, ValueError) as e:
+            except (json.JSONDecodeError, ValueError, ValidationError) as e:
                 last_exception = e
-                logger.warning(f"Attempt {attempt + 1}/{retries} failed to parse JSON: {e}. Raw output snippet: {raw_response[:200]}...")
+                logger.warning(f"Attempt {attempt + 1}/{retries} failed: {e}. Raw output snippet: {raw_response[:200]}...")
                 # Optional: You could update the prompt here to ask for correction, 
                 # but simple retry often works for stochastic LLM errors.
             except Exception as e:

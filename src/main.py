@@ -1,6 +1,5 @@
 import json
 import argparse
-from pathlib import Path
 from typing import List
 
 from src.core.models import SceneSpec
@@ -8,7 +7,7 @@ from src.core.graph import ManimGraph
 from src.components.assembler import Assembler
 from src.components.tts import TTSEngine
 from src.utils.logger import logger, metrics
-from src.core.config import settings
+
 
 def load_script(json_path: str) -> List[SceneSpec]:
     """加载剧本文件"""

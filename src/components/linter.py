@@ -2,9 +2,8 @@ import ast
 import subprocess
 import tempfile
 import sys
-import os
 from pathlib import Path
-from typing import Tuple
+
 
 from src.core.models import LintResult, ErrorType
 from src.utils.code_ops import extract_code

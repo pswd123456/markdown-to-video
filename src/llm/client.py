@@ -2,12 +2,12 @@ from openai import OpenAI
 from src.core.config import settings
 
 class LLMClient:
-    def __init__(self):
+    def __init__(self, model: str = None):
         self.client = OpenAI(
             api_key=settings.DASHSCOPE_API_KEY,
             base_url=settings.DASHSCOPE_BASE_URL
         )
-        self.model = settings.CODER_MODEL # e.g., "qwen3-coder-plus"
+        self.model = model if model else settings.CODER_MODEL # e.g., "qwen3-coder-plus"
 
     def generate_code(self, system_prompt: str, user_prompt: str) -> str:
         """

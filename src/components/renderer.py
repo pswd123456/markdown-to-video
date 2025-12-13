@@ -55,7 +55,7 @@ class ManimRunner:
         # --disable_caching: 避免旧缓存干扰
         # -o: 指定输出文件名
         
-        video_filename = f"{scene_id}.mp4"
+
         
         # Manim 默认会在 media/videos/scene/quality/ 目录下生成
         # 我们这里使用 Docker 的工作流，让它输出到挂载的 /manim/output
@@ -93,7 +93,7 @@ class ManimRunner:
             # Manim 的输出目录结构比较深，通常是 /manim/output/videos/scene/quality/Snippet.mp4
             # 我们需要递归查找生成的 .mp4 文件
             video_path = self._find_file(temp_dir, ".mp4")
-            image_path = self._find_file(temp_dir, ".png") # 最后一帧通常会自动生成，或需添加 -s 参数
+
 
             if not video_path:
                 raise RenderError("Render finished but no MP4 file found.")

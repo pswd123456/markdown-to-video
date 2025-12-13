@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 import sys
 from pathlib import Path
-import os
+
 
 # Add project root to sys.path
 sys.path.append(str(Path(__file__).parent.parent))

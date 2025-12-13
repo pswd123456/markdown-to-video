@@ -1,5 +1,5 @@
 import dashscope
-from pathlib import Path
+
 import requests
 from src.core.config import settings
 from src.utils.logger import logger
@@ -15,7 +15,7 @@ class TTSEngine:
         
         # 使用 Qwen TTS 模型
         self.model = "qwen3-tts-flash" 
-        self.voice = "Cherry"
+        self.voice = "Kai"
 
     def generate(self, text: str, scene_id: str) -> str:
         """

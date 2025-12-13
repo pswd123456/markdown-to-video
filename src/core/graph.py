@@ -54,7 +54,7 @@ class ManimGraph:
 
     # --- Node: Lint ---
     def node_check_syntax(self, state: GraphState) -> Dict[str, Any]:
-        print(f"🔍 [Node: Lint] Checking code syntax...")
+        print("[Node: Lint] Checking code syntax...")
         res = self.linter.validate(state["code"])
         if res.passed:
             return {"error_log": None}
@@ -63,7 +63,7 @@ class ManimGraph:
 
     # --- Node: Render ---
     def node_render(self, state: GraphState) -> Dict[str, Any]:
-        print(f"🎨 [Node: Render] Rendering in Docker...")
+        print("🎨 [Node: Render] Rendering in Docker...")
         try:
             artifact = self.runner.render(state["code"], state["scene_spec"].scene_id)
             return {"artifact": artifact, "error_log": None}
@@ -72,7 +72,7 @@ class ManimGraph:
 
     # --- Node: Critic (New) ---
     def node_critic(self, state: GraphState) -> Dict[str, Any]:
-        print(f"👀 [Node: Critic] Inspecting visual layout...")
+        print("👀 [Node: Critic] Inspecting visual layout...")
         artifact = state.get("artifact")
         
         # 极端情况：渲染成功但没图 (ffmpeg bug?)

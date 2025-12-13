@@ -8,7 +8,7 @@ from src.core.models import SceneSpec, CodeGenerationRequest
 from src.core.config import settings
 
 def test_infrastructure():
-    print(f"当前时间: 2025-12-14")
+    print("当前时间: 2025-12-14")
     print(f"项目根目录: {settings.OUTPUT_DIR}")
 
     # 1. 测试 SceneSpec 校验

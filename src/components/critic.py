@@ -1,7 +1,7 @@
 import base64
 import json
 from pathlib import Path
-from typing import Dict, Any
+
 
 from src.core.models import CritiqueFeedback, SceneSpec
 from src.core.config import settings

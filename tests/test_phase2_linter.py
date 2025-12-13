@@ -18,7 +18,7 @@ class GoodScene(Scene):
         c = Circle()
         self.play(Create(c))
 """
-    print(f"Testing Good Code...")
+    print("Testing Good Code...")
     res = linter.validate(good_code)
     if res.passed:
         print("✅ Passed (Expected)")
@@ -32,12 +32,12 @@ class BadSyntax(Scene)  # Missing colon
     def construct(self):
         pass
 """
-    print(f"\nTesting Syntax Error...")
+    print("\nTesting Syntax Error...")
     res = linter.validate(syntax_error_code)
     if not res.passed and res.error_type == "SYNTAX":
         print(f"✅ Caught Syntax Error: {res.traceback.splitlines()[0]}")
     else:
-        print(f"❌ Failed to catch syntax error")
+        print("❌ Failed to catch syntax error")
 
     # Case 3: 运行时错误 (变量未定义)
     # 这种错误 AST 查不出来，必须 Dry Run 才能查出
@@ -49,10 +49,10 @@ class BadRuntime(Scene):
         s = Square() 
         self.add(CircleXYZ) 
 """
-    print(f"\nTesting Runtime Error (Dry Run)...")
+    print("\nTesting Runtime Error (Dry Run)...")
     res = linter.validate(runtime_error_code)
     if not res.passed and res.error_type == "RUNTIME":
-        print(f"✅ Caught Runtime Error.")
+        print("✅ Caught Runtime Error.")
         print(f"   Traceback Preview: {res.traceback[:100]}...")
     else:
         print(f"❌ Failed to catch runtime error. Result: {res}")

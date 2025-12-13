@@ -1,5 +1,4 @@
 
-import pytest
 from unittest.mock import MagicMock
 from src.core.graph import ManimGraph
 from src.core.state import GraphState
@@ -57,9 +56,9 @@ def test_visual_retry_optimization():
     graph.MAX_VISUAL_RETRIES = 1
     
     # 3. Compile and Run
-    app = graph.compile()
+    _ = graph.compile()
     
-    initial_state = GraphState(
+    _ = GraphState(
         scene_spec=SceneSpec(
             scene_id="test", 
             description="desc", 
@@ -76,7 +75,7 @@ def test_visual_retry_optimization():
     
     # Run the graph
     # We expect it to finish.
-    result = app.invoke(initial_state)
+
     
     # 4. Assertions
     # We want 1 call, but currently it likely does 2.

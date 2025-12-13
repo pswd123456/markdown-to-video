@@ -5,7 +5,7 @@
       "scene_id": "intro_01",
       "description": "Show the title 'Python Basics' in the center. Then fade in a Python logo below it.",
       "duration": 3.0,
-      "elements": ["Title Text", "Python Logo"],
+      "elements": ["Title Text"],
       "audio_script": "Welcome to Python Basics. Today we learn about lists."
     },
     {

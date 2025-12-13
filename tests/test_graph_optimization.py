@@ -56,9 +56,9 @@ def test_visual_retry_optimization():
     graph.MAX_VISUAL_RETRIES = 1
     
     # 3. Compile and Run
-    _ = graph.compile()
+    app = graph.compile()
     
-    _ = GraphState(
+    initial_state = GraphState(
         scene_spec=SceneSpec(
             scene_id="test", 
             description="desc", 
@@ -75,6 +75,7 @@ def test_visual_retry_optimization():
     
     # Run the graph
     # We expect it to finish.
+    app.invoke(initial_state)
 
     
     # 4. Assertions

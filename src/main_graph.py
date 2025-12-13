@@ -10,11 +10,12 @@ def main():
 
     # 2. 准备输入数据
     test_scene = SceneSpec(
-        scene_id="graph_demo_01",
-        description="Visualize a sine wave.",
+        scene_id="visual_test_01",
+        description="Draw a very large red Circle. Draw a Text 'Hello World' exactly in the center of the screen.",
+        # 这通常会导致 Text 被 Circle 的线条穿过或遮挡，或者颜色混杂
         duration=4.0,
-        elements=["Axes", "Sine Curve"],
-        audio_script="This is a sine wave function."
+        elements=["Big Circle", "Center Text"],
+        audio_script="Testing visual critique."
     )
 
     # 3. 运行图

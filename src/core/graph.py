@@ -2,152 +2,176 @@ from langgraph.graph import StateGraph, END
 from typing import Literal, Dict, Any
 
 from src.core.state import GraphState
-from src.core.config import settings
 from src.core.models import CodeGenerationRequest
 from src.components.context_builder import ContextBuilder
 from src.components.linter import CodeLinter
 from src.components.renderer import ManimRunner
+from src.components.critic import VisionCritic # <--- 新增
 from src.llm.client import LLMClient
 from src.utils.code_ops import extract_code
 
 class ManimGraph:
     def __init__(self):
-        # 初始化工具链
         self.context_builder = ContextBuilder()
         self.llm = LLMClient()
         self.linter = CodeLinter()
         self.runner = ManimRunner()
+        self.critic = VisionCritic() # <--- 新增
         
-        # 配置
-        self.MAX_RETRIES = 3
+        self.MAX_SYNTAX_RETRIES = 3
+        self.MAX_VISUAL_RETRIES = 2 # 视觉修正比较贵，试2次即可
 
-    # ==========================
-    #         NODES
-    # ==========================
-
+    # --- Node: Generate ---
     def node_generate_code(self, state: GraphState) -> Dict[str, Any]:
-        """[Node] 根据当前状态生成或修复代码"""
-        current_retries = state.get("retries", 0)
-        print(f"🤖 [Node: Generate] Attempt {current_retries + 1}/{self.MAX_RETRIES + 1}")
+        """生成或修复代码 (处理两种反馈来源)"""
+        # 计算当前是第几次尝试 (仅用于日志)
+        syn_try = state.get("retries", 0)
+        vis_try = state.get("visual_retries", 0)
+        print(f"🤖 [Node: Generate] (Syntax Try: {syn_try}, Visual Try: {vis_try})")
 
-        # 1. 准备请求对象
-        is_retry = (current_retries > 0)
+        # 确定反馈内容：优先看 Critic 反馈，其次看 Linter 反馈
+        feedback = None
+        if state.get("critic_feedback"):
+            feedback = f"Visual QA Failed: {state['critic_feedback']}"
+            print("   👉 Fixing based on Visual Feedback")
+        elif state.get("error_log"):
+            feedback = f"Runtime Error: {state['error_log']}"
+            print("   👉 Fixing based on Linter Error")
+
         req = CodeGenerationRequest(
             scene=state["scene_spec"],
             previous_code=state.get("code"),
-            feedback_context=state.get("error_log") if is_retry else None
+            feedback_context=feedback
         )
 
-        # 2. 构建 Prompt
         sys_prompt = self.context_builder.build_system_prompt()
         user_prompt = self.context_builder.build_user_prompt(req)
-
-        # 3. 调用 LLM
+        
         raw_resp = self.llm.generate_code(sys_prompt, user_prompt)
         new_code = extract_code(raw_resp)
 
-        # 4. 返回状态更新 (LangGraph 会合并此字典到主 State)
-        return {
-            "code": new_code,
-            # 注意：重试计数器在进入此节点前或离开后更新均可，这里选择不在此处增加，
-            # 而是由 Edge 路由决定何时算作一次消耗。
-            # 但为了简单，我们在发生错误进入 retry 分支时已经隐式消耗了一次机会。
-        }
+        return {"code": new_code}
 
+    # --- Node: Lint ---
     def node_check_syntax(self, state: GraphState) -> Dict[str, Any]:
-        """[Node] 静态代码检查 (Fail-Fast)"""
         print(f"🔍 [Node: Lint] Checking code syntax...")
-        code = state["code"]
-        
-        lint_result = self.linter.validate(code)
-        
-        if lint_result.passed:
-            print("   ✅ Linter passed.")
-            return {"error_log": None} # 清除错误
+        res = self.linter.validate(state["code"])
+        if res.passed:
+            return {"error_log": None}
         else:
-            print(f"   ❌ Linter failed: {lint_result.error_type}")
-            return {"error_log": lint_result.traceback}
+            return {"error_log": res.traceback}
 
+    # --- Node: Render ---
     def node_render(self, state: GraphState) -> Dict[str, Any]:
-        """[Node] Docker 渲染"""
         print(f"🎨 [Node: Render] Rendering in Docker...")
         try:
-            artifact = self.runner.render(
-                state["code"],
-                state["scene_spec"].scene_id
-            )
-            return {"artifact": artifact}
+            artifact = self.runner.render(state["code"], state["scene_spec"].scene_id)
+            return {"artifact": artifact, "error_log": None}
         except Exception as e:
-            print(f"   ❌ Render runtime error: {e}")
-            return {"error_log": str(e)}
+            return {"error_log": str(e), "artifact": None}
 
-    # ==========================
-    #         EDGES
-    # ==========================
+    # --- Node: Critic (New) ---
+    def node_critic(self, state: GraphState) -> Dict[str, Any]:
+        print(f"👀 [Node: Critic] Inspecting visual layout...")
+        artifact = state.get("artifact")
+        
+        # 极端情况：渲染成功但没图 (ffmpeg bug?)
+        if not artifact or not artifact.last_frame_path or artifact.last_frame_path == "N/A":
+             print("   ⚠️ No image found to critique.")
+             return {"critic_feedback": None} # Skip critique
 
-    def edge_router_after_lint(self, state: GraphState) -> Literal["render", "generate", "failed"]:
-        """[Edge] Linter 后的路由逻辑"""
+        feedback = self.critic.review_layout(artifact.last_frame_path, state["scene_spec"])
         
-        # 1. 如果无错误，直接去渲染
-        if state.get("error_log") is None:
-            return "render"
+        if feedback.passed:
+            print(f"   ✅ Visual QC Passed (Score: {feedback.score})")
+            return {"critic_feedback": None}
+        else:
+            print(f"   ❌ Visual QC Failed (Score: {feedback.score}): {feedback.suggestion}")
+            return {"critic_feedback": feedback.suggestion}
+
+    # --- Helper Nodes ---
+    def node_prep_syntax_retry(self, state: GraphState):
+        return {"retries": state.get("retries", 0) + 1}
+
+    def node_prep_visual_retry(self, state: GraphState):
+        # 视觉重试时，我们需要清除 error_log 以免混淆 generator，同时重置语法计数器
+        return {
+            "visual_retries": state.get("visual_retries", 0) + 1,
+            "retries": 0, # 新代码要重新算语法检查次数
+            "error_log": None 
+        }
+
+    # --- Edges ---
+    def edge_router_after_lint(self, state: GraphState) -> Literal["render", "retry_syntax", "failed"]:
+        if state.get("error_log"):
+            if state.get("retries", 0) >= self.MAX_SYNTAX_RETRIES:
+                return "failed"
+            return "retry_syntax"
+        return "render"
+
+    def edge_router_after_render(self, state: GraphState) -> Literal["critic", "failed"]:
+        # 如果渲染本身报错了（比如 OOM），直接 Fail (或者可以加逻辑跳回 Generate)
+        if state.get("error_log"):
+             return "failed" 
+        return "critic"
+
+    def edge_router_after_critic(self, state: GraphState) -> Literal["finish", "retry_visual"]:
+        if state.get("critic_feedback") is None:
+            return "finish" # 没意见，或者通过了
         
-        # 2. 如果有错误，检查是否超出重试次数
-        current_retries = state.get("retries", 0)
-        if current_retries >= self.MAX_RETRIES:
-            print("   ⛔ Max retries reached. Giving up.")
-            return "failed"
+        if state.get("visual_retries", 0) >= self.MAX_VISUAL_RETRIES:
+            print("   ⛔ Max visual retries reached. Accepting result as is.")
+            return "finish" # 累了，就这样吧
             
-        # 3. 没超限，回炉重造
-        print(f"   🔄 Routing back to generator (Retry {current_retries + 1})...")
-        return "generate"
+        return "retry_visual"
 
-    def edge_update_retry_count(self, state: GraphState) -> Dict[str, Any]:
-        """辅助逻辑：在回跳前增加计数器 (LangGraph 允许在 Edge 中返回状态更新吗？通常不，这里我们在 Node 中处理或者使用专门的 updater node)"""
-        # 修正：LangGraph 的 Conditional Edge 只负责路由。
-        # 我们需要在路由回 "generate" 之前，确保 retry 计数+1。
-        # 最佳实践是添加一个轻量级的 "prepare_retry" 节点。
-        pass 
-
-    # ==========================
-    #       COMPILATION
-    # ==========================
-
+    # --- Compile ---
     def compile(self):
         workflow = StateGraph(GraphState)
 
-        # 1. 添加节点
+        # Add Nodes
         workflow.add_node("generate", self.node_generate_code)
         workflow.add_node("lint", self.node_check_syntax)
         workflow.add_node("render", self.node_render)
+        workflow.add_node("critic", self.node_critic)
         
-        # 添加一个专门用于更新重试计数的节点，使逻辑更清晰
-        def node_prepare_retry(state: GraphState):
-            return {"retries": state["retries"] + 1}
-        workflow.add_node("prepare_retry", node_prepare_retry)
+        workflow.add_node("prep_syn", self.node_prep_syntax_retry)
+        workflow.add_node("prep_vis", self.node_prep_visual_retry)
+        workflow.add_node("failed", lambda x: print("Workflow Failed"))
 
-        # 失败节点 (标记结束)
-        workflow.add_node("failed", lambda x: print("Workflow Failed."))
-
-        # 2. 定义流程
+        # Define Flows
         workflow.set_entry_point("generate")
-        
         workflow.add_edge("generate", "lint")
-
-        # 条件分支
+        
+        # 路由 1: 语法检查
         workflow.add_conditional_edges(
             "lint",
             self.edge_router_after_lint,
             {
-                "render": "render",        # 通过 -> 渲染
-                "generate": "prepare_retry", # 失败 -> 准备重试 -> 生成
-                "failed": "failed"         # 彻底失败
+                "render": "render",
+                "retry_syntax": "prep_syn",
+                "failed": "failed"
             }
         )
-        
-        workflow.add_edge("prepare_retry", "generate") # 闭环
+        workflow.add_edge("prep_syn", "generate")
 
-        workflow.add_edge("render", END)
+        # 路由 2: 渲染后 -> 视觉审查
+        workflow.add_conditional_edges(
+            "render",
+            self.edge_router_after_render,
+            {"critic": "critic", "failed": "failed"}
+        )
+
+        # 路由 3: 视觉审查结果
+        workflow.add_conditional_edges(
+            "critic",
+            self.edge_router_after_critic,
+            {
+                "finish": END,
+                "retry_visual": "prep_vis"
+            }
+        )
+        workflow.add_edge("prep_vis", "generate") # 带着视觉反馈回到生成器
         workflow.add_edge("failed", END)
 
         return workflow.compile()

@@ -1,0 +1,24 @@
+# CORE OBJECTS
+class Scene(object):
+    def construct(self): pass
+    def play(self, *animations, run_time=1.0): pass
+    def wait(self, duration=1.0): pass
+    def add(self, *mobjects): pass
+
+# GEOMETRY
+class Circle(VMobject):
+    def __init__(self, radius=1.0, color=RED): pass
+class Square(VMobject):
+    def __init__(self, side_length=2.0, color=BLUE): pass
+class Text(VMobject):
+    def __init__(self, text, font_size=48): pass
+
+# ANIMATIONS
+class Create(Animation): pass
+class FadeIn(Animation): pass
+class Write(Animation): pass
+
+# POSITIONING (Important!)
+# obj.next_to(target, direction, buff=0.5)
+# obj.move_to(point_or_mobject)
+# obj.align_to(target, direction)

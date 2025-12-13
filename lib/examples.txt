@@ -1,0 +1,20 @@
+Example 1: A simple circle animation
+Input: "Draw a red circle."
+Code:
+```python
+from manim import *
+class GenScene(Scene):
+    def construct(self):
+        c = Circle(color=RED)
+        self.play(Create(c))
+        self.wait(1)
+
+Example 2: Text relative positioning Input: "Show 'Hello' above a square." Code:
+from manim import *
+class GenScene(Scene):
+    def construct(self):
+        sq = Square()
+        txt = Text("Hello").next_to(sq, UP, buff=0.5)
+        self.play(Create(sq))
+        self.play(Write(txt))
+        self.wait(2)

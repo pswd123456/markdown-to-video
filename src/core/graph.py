@@ -19,7 +19,7 @@ class ManimGraph:
         self.critic = VisionCritic() # <--- 新增
         
         self.MAX_SYNTAX_RETRIES = 3
-        self.MAX_VISUAL_RETRIES = 2 # 视觉修正比较贵，试2次即可
+        self.MAX_VISUAL_RETRIES = 1 # 视觉修正比较贵，试2次即可
 
     # --- Node: Generate ---
     def node_generate_code(self, state: GraphState) -> Dict[str, Any]:

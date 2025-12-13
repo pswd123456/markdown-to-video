@@ -100,13 +100,25 @@ class ManimRunner:
 
             # 将产物移动到最终的 artifacts 目录，不再保留在 temp
             final_video_path = self.output_dir / f"{scene_id}.mp4"
-            final_image_path = self.output_dir / f"{scene_id}.png"
-            
             shutil.move(str(video_path), str(final_video_path))
-            if image_path:
-                shutil.move(str(image_path), str(final_image_path))
-            else:
-                # 如果没有图片，尝试用 ffmpeg 截取最后一帧 (可选优化)
+
+            final_image_path = self.output_dir / f"{scene_id}.png"
+            try:
+                # 使用 ffmpeg 提取最后一帧
+                # -sseof -3: 从末尾前3秒开始找（防止正好切到黑屏结束帧，取倒数第2-3帧比较保险）
+                # -vframes 1: 只取1帧
+                # -q:v 2: 高质量 JPG/PNG
+                subprocess.run([
+                    "ffmpeg", "-y", 
+                    "-sseof", "-1", # 取最后一秒
+                    "-i", str(final_video_path), 
+                    "-update", "1", 
+                    "-q:v", "2", 
+                    str(final_image_path)
+                ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+            except Exception as e:
+                print(f"⚠️ Warning: Failed to extract frame for critic: {e}")
                 final_image_path = "N/A"
 
             # 6. 清理临时目录

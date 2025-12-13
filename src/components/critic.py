@@ -77,7 +77,7 @@ Analyze the attached image based on the checklist.
                     }
                 ],
                 max_tokens=500,
-                temperature=0.1, # 评价需要客观
+                temperature=0.3, # 评价需要客观
                 response_format={"type": "json_object"} # 强制 JSON (如果模型支持)
             )
             

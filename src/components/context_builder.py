@@ -25,6 +25,7 @@ Your goal is to write Python code using the 'manim' library to visualize the use
 3. The main logic MUST be in `construct(self)`.
 4. Use `self.wait()` at the end.
 5. PREFER relative positioning (next_to) over absolute coordinates.
+6. For ANY text content, ALWAYS use `font="Noto Sans CJK SC"` in `Text(...)` constructor to support Chinese characters.
 
 # AVAILABLE API (Strictly follow this subset)
 {self.api_stubs}

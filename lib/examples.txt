@@ -14,7 +14,19 @@ from manim import *
 class GenScene(Scene):
     def construct(self):
         sq = Square()
-        txt = Text("Hello").next_to(sq, UP, buff=0.5)
+        txt = Text("Hello", font="Noto Sans CJK SC").next_to(sq, UP, buff=0.5)
         self.play(Create(sq))
         self.play(Write(txt))
         self.wait(2)
+
+Example 3: Chinese Text
+Input: "Display '你好' in the center."
+Code:
+```python
+from manim import *
+class GenScene(Scene):
+    def construct(self):
+        txt = Text("你好", font="Noto Sans CJK SC")
+        self.play(Write(txt))
+        self.wait(1)
+```

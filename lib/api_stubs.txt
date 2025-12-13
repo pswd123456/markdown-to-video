@@ -11,7 +11,7 @@ class Circle(VMobject):
 class Square(VMobject):
     def __init__(self, side_length=2.0, color=BLUE): pass
 class Text(VMobject):
-    def __init__(self, text, font_size=48): pass
+    def __init__(self, text, font="Noto Sans CJK SC", font_size=48): pass
 
 # ANIMATIONS
 class Create(Animation): pass

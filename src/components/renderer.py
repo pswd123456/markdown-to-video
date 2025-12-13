@@ -38,6 +38,11 @@ class ManimRunner:
         temp_dir = self.output_dir / "temp" / f"{scene_id}_{session_id}"
         temp_dir.mkdir(parents=True, exist_ok=True)
 
+        try:
+            os.chmod(str(temp_dir), 0o777)
+        except Exception as e:
+            print(f"⚠️ Warning: Failed to chmod temp dir: {e}")
+
         script_path = temp_dir / "scene.py"
         
         # 2. 写入代码文件
@@ -114,7 +119,7 @@ class ManimRunner:
                 code_content=code
             )
 
-        except subprocess.TimeoutError:
+        except TimeoutError:
             raise RenderError("Render Timed Out (Docker container killed).")
         except Exception as e:
             raise RenderError(f"System Error: {str(e)}")

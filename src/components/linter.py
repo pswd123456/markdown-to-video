@@ -52,26 +52,30 @@ class CodeLinter:
     def _dry_run(self, code: str) -> LintResult:
         """
         在子进程中执行 Manim 的 Dry Run 模式。
-        --dry_run: 不生成视频文件，只计算动画数据，速度极快。
         """
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             script_path = temp_path / "scene_check.py"
             
+            tex_dir = temp_path / "media" / "Tex"
+            tex_dir.mkdir(parents=True, exist_ok=True)
+            
+            (temp_path / "media" / "texts").mkdir(parents=True, exist_ok=True)
+            # --- 【修复结束】 ---
+
             # 写入用户代码
             with open(script_path, "w", encoding="utf-8") as f:
                 f.write(code)
 
             # 构造 Manim 命令
-            # -ql: 低质量 (其实 dry_run 不渲染，但加上以防万一)
-            # --dry_run: 关键参数，只跑逻辑不编码
-            # --disable_caching: 禁用缓存，确保每次都真实运行
+            # 显式指定 --media_dir 为当前临时目录，防止它去系统其他地方乱写
             cmd = [
                 sys.executable, "-m", "manim", 
                 str(script_path), 
                 "-ql", 
                 "--dry_run", 
-                "--disable_caching"
+                "--disable_caching",
+                "--media_dir", str(temp_path / "media") # 显式指定输出路径
             ]
 
             try:
@@ -95,7 +99,7 @@ class CodeLinter:
                         traceback=cleaned_tb
                     )
 
-            except subprocess.TimeoutError:
+            except TimeoutError:  # 直接捕获内置异常
                 return LintResult(
                     passed=False,
                     error_type=ErrorType.RUNTIME,

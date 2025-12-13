@@ -82,10 +82,26 @@ class Assembler:
         if not segment_paths:
             raise ValueError("No valid segments created.")
 
+        # === 步骤 B.5: 生成黑屏过渡 (Spacer) ===
+        spacer_path = None
+        if segment_paths:
+            try:
+                resolution = self._get_video_resolution(segment_paths[0])
+                spacer_path = self.output_dir / "black_spacer.mp4"
+                if not spacer_path.exists():
+                    logger.info(f"   ⚫ Generating 1s black spacer ({resolution})...")
+                    self._create_spacer(resolution, 1.0, spacer_path)
+            except Exception as e:
+                logger.warning(f"   ⚠️ Failed to create spacer: {e}")
+                spacer_path = None
+
         # === 步骤 C: Concat (拼接) ===
         with open(concat_list_path, "w", encoding="utf-8") as f:
-            for path in segment_paths:
+            for i, path in enumerate(segment_paths):
                 f.write(f"file '{Path(path).resolve()}'\n")
+                # 在片段之间插入黑屏 (如果生成成功)
+                if spacer_path and i < len(segment_paths) - 1:
+                    f.write(f"file '{spacer_path.resolve()}'\n")
         
         output_path = self.output_dir / output_filename
         concat_cmd = [
@@ -103,3 +119,27 @@ class Assembler:
         # concat_list_path.unlink(missing_ok=True)
         
         return str(output_path)
+
+    def _get_video_resolution(self, video_path: str) -> str:
+        """获取视频分辨率 (e.g., '1920x1080')"""
+        cmd = [
+            "ffprobe", "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=width,height",
+            "-of", "csv=s=x:p=0",
+            video_path
+        ]
+        return subprocess.check_output(cmd, text=True).strip()
+
+    def _create_spacer(self, resolution: str, duration: float, output_path: Path):
+        """生成指定分辨率和时长的黑屏视频 (带静音)"""
+        cmd = [
+            "ffmpeg", "-y", "-v", "error",
+            "-f", "lavfi", "-i", f"color=c=black:s={resolution}:d={duration}",
+            "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k",
+            "-shortest",
+            str(output_path)
+        ]
+        subprocess.run(cmd, check=True)

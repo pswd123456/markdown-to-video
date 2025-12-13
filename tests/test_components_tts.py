@@ -67,5 +67,39 @@ class TestTTSEngine(unittest.TestCase):
         mock_call.assert_called_once()
         mock_get.assert_called_once_with("http://example.com/audio.mp3")
 
+    @patch('src.components.tts.subprocess.run')
+    def test_get_duration(self, mock_run):
+        # Create a dummy file
+        dummy_path = self.tts.output_dir / "test_duration.mp3"
+        dummy_path.touch()
+        
+        try:
+            # Mock successful ffprobe
+            mock_result = MagicMock()
+            mock_result.stdout = "5.5\n"
+            mock_run.return_value = mock_result
+            
+            duration = self.tts.get_duration(str(dummy_path))
+            self.assertEqual(duration, 5.5)
+        finally:
+            if dummy_path.exists():
+                dummy_path.unlink()
+
+    @patch('src.components.tts.subprocess.run')
+    def test_get_duration_fail(self, mock_run):
+         # Create a dummy file
+         dummy_path = self.tts.output_dir / "test_duration_fail.mp3"
+         dummy_path.touch()
+         
+         try:
+             # Mock failure
+             mock_run.side_effect = Exception("FFprobe failed")
+             
+             duration = self.tts.get_duration(str(dummy_path))
+             self.assertEqual(duration, 0.0)
+         finally:
+            if dummy_path.exists():
+                dummy_path.unlink()
+
 if __name__ == '__main__':
     unittest.main()

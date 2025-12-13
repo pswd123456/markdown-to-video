@@ -1,6 +1,7 @@
 import dashscope
-
 import requests
+import subprocess
+from pathlib import Path
 from src.core.config import settings
 from src.utils.logger import logger
 
@@ -15,7 +16,28 @@ class TTSEngine:
         
         # 使用 Qwen TTS 模型
         self.model = "qwen3-tts-flash" 
-        self.voice = "Kai"
+        self.voice = "Cherry"
+
+    def get_duration(self, audio_path: str) -> float:
+        """获取音频时长(秒)"""
+        if not audio_path or not Path(audio_path).exists():
+            return 0.0
+            
+        cmd = [
+            "ffprobe", 
+            "-v", "error", 
+            "-show_entries", "format=duration", 
+            "-of", "default=noprint_wrappers=1:nokey=1", 
+            audio_path
+        ]
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            val = result.stdout.strip()
+            return float(val) if val else 0.0
+        except Exception as e:
+            logger.error(f"⚠️ Failed to get duration for {audio_path}: {e}")
+            return 0.0
 
     def generate(self, text: str, scene_id: str) -> str:
         """

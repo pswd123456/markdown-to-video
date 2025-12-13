@@ -66,6 +66,15 @@ def main():
         audio_path = tts.generate(scene.audio_script, scene.scene_id)
         audio_paths.append(audio_path)
         
+        # [Fix] Update scene duration based on actual audio length
+        if audio_path:
+             audio_dur = tts.get_duration(audio_path)
+             if audio_dur > 0:
+                 # Add small buffer (0.5s) to ensure audio finishes
+                 old_dur = scene.duration
+                 scene.duration = round(audio_dur + 0.5, 2)
+                 logger.info(f"   ⏱️  Adjusted scene duration from {old_dur}s to {scene.duration}s based on audio.")
+        
         # B. 运行 LangGraph 流水线 (Code -> Lint -> Render -> Critic)
         state_input = {
             "scene_spec": scene,

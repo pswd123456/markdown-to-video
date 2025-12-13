@@ -13,5 +13,8 @@ RUN apt-get update && apt-get install -y fonts-noto-cjk
 # 创建输入输出挂载点 (最佳实践)
 RUN mkdir -p /manim/input /manim/output
 
-# 切换回 manim 用户 (安全最佳实践)
-USER manim
+# 修正权限 (使用 base image 默认用户 manimuser)
+RUN chown -R manimuser:manimuser /manim
+
+# 切换回 manimuser 用户
+USER manimuser

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     OUTPUT_DIR: Path = BASE_DIR / "output"
     
     # Docker Configuration (For Phase 3)
-    DOCKER_IMAGE: str = "manimcommunity/manim:v0.19.0"
+    DOCKER_IMAGE: str = "auto-manim-runner:v1"
     DOCKER_TIMEOUT: int = 60 # 秒
 
     # Manim Defaults

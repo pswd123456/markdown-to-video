@@ -109,10 +109,16 @@ class ManimGraph:
             return "retry_syntax"
         return "render"
 
-    def edge_router_after_render(self, state: GraphState) -> Literal["critic", "failed"]:
+    def edge_router_after_render(self, state: GraphState) -> Literal["critic", "finish", "failed"]:
         # 如果渲染本身报错了（比如 OOM），直接 Fail (或者可以加逻辑跳回 Generate)
         if state.get("error_log"):
              return "failed" 
+        
+        # Optimization: Skip expensive visual critique if we can't retry anyway
+        if state.get("visual_retries", 0) >= self.MAX_VISUAL_RETRIES:
+            print("   ⛔ Max visual retries reached. Skipping final critic check.")
+            return "finish"
+
         return "critic"
 
     def edge_router_after_critic(self, state: GraphState) -> Literal["finish", "retry_visual"]:
@@ -159,7 +165,7 @@ class ManimGraph:
         workflow.add_conditional_edges(
             "render",
             self.edge_router_after_render,
-            {"critic": "critic", "failed": "failed"}
+            {"critic": "critic", "failed": "failed", "finish": END}
         )
 
         # 路由 3: 视觉审查结果

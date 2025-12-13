@@ -1,25 +1,44 @@
 import json
 import argparse
+import os
 from typing import List
 
 from src.core.models import SceneSpec
 from src.core.graph import ManimGraph
 from src.components.assembler import Assembler
+from src.components.rewriter import ScriptRewriter
 from src.components.tts import TTSEngine
 from src.utils.logger import logger, metrics
 
 
-def load_script(json_path: str) -> List[SceneSpec]:
-    """加载剧本文件"""
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-        # 假设 JSON 结构是: {"title": "...", "scenes": [...]}
-        scenes_data = data.get("scenes", [])
+def load_script(file_path: str) -> List[SceneSpec]:
+    """加载剧本文件，支持 JSON (直接加载) 或 MD/TXT (通过 LLM 重写)"""
+    ext = os.path.splitext(file_path)[1].lower()
+    
+    if ext == ".json":
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            # 假设 JSON 结构是: {"title": "...", "scenes": [...]}
+            scenes_data = data.get("scenes", [])
+            return [SceneSpec(**item) for item in scenes_data]
+            
+    elif ext in [".md", ".txt"]:
+        logger.info(f"📄 Detected {ext} file. Invoking ScriptRewriter to generate storyboard...")
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        rewriter = ScriptRewriter()
+        # rewrite() 返回 {"scenes": [dict, ...]}，且已通过 SceneSpec 校验
+        result = rewriter.rewrite(content)
+        scenes_data = result.get("scenes", [])
         return [SceneSpec(**item) for item in scenes_data]
+    
+    else:
+        raise ValueError(f"Unsupported file format: {ext}. Use .json, .md, or .txt")
 
 def main():
     parser = argparse.ArgumentParser(description="Auto Manim Video Generator v2.2")
-    parser.add_argument("script", help="Path to the storyboard JSON file")
+    parser.add_argument("script", help="Path to the storyboard JSON file or raw Markdown/Text draft")
     args = parser.parse_args()
 
     # 1. 加载数据

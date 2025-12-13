@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 # --- Enums (为了更好的类型安全) ---
@@ -10,6 +10,10 @@ class ErrorType(str, Enum):
     RUNTIME = "RUNTIME"   # Dry Run 时的运行时错误
     NONE = "NONE"         # 无错误
 
+class SceneType(str, Enum):
+    DYNAMIC = "dynamic"   # Manim 动态视频
+    STATIC = "static"     # Marp 静态幻灯片 (Future)
+
 # --- Data Models ---
 
 class SceneSpec(BaseModel):
@@ -18,6 +22,7 @@ class SceneSpec(BaseModel):
     通常由 Storyboard 阶段生成
     """
     scene_id: str = Field(..., description="场景唯一标识符")
+    type: SceneType = Field(default=SceneType.DYNAMIC, description="场景类型: dynamic | static")
     description: str = Field(..., description="场景的自然语言描述")
     duration: float = Field(..., gt=0, description="场景持续时间(秒)")
     elements: List[str] = Field(default_factory=list, description="涉及的实体列表，如 ['Server', 'Database']")

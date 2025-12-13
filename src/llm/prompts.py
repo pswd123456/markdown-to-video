@@ -14,6 +14,7 @@ The output MUST be a JSON object with a single key "scenes" containing the list 
   "scenes": [
     {
       "scene_id": "scene_01",       // Unique identifier (sequential)
+      "type": "dynamic",            // "dynamic" (Manim animation) or "static" (Slide) - Default to "dynamic"
       "description": "...",         // VISUAL instructions for the animation coder
       "duration": 5.0,              // Estimated duration in seconds (based on audio_script length)
       "elements": ["Server", "DB"], // List of key visual entities in this scene

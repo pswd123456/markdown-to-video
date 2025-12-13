@@ -18,6 +18,7 @@ def test_validation_success(mock_llm_client):
       "scenes": [
         {
           "scene_id": "scene_01",
+          "type": "dynamic",
           "description": "Valid scene.",
           "duration": 5.0,
           "elements": ["Element"],
@@ -33,6 +34,7 @@ def test_validation_success(mock_llm_client):
     assert len(result["scenes"]) == 1
     assert result["scenes"][0]["duration"] == 5.0
     assert result["scenes"][0]["scene_id"] == "scene_01"
+    assert result["scenes"][0]["type"] == "dynamic"
 
 def test_validation_failure_missing_field_then_success(mock_llm_client):
     # First attempt: Missing 'duration'

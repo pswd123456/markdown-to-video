@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+.env
+.venv/
+venv/
+venv.bak/
+.idea/
+.vscode/
+
+# IDEs
+*.swp
+*.bak
+*.swo
+
+# OS
+.DS_Store
+.Trashes
+Thumbs.db
+
+.gemini/

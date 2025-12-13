@@ -108,6 +108,17 @@ def main():
                 )
             else:
                 logger.error(f"❌ Scene {scene.scene_id} Failed completely.")
+                
+                # --- Debug Info ---
+                if final_state.get("error_log"):
+                    logger.error(f"🔎 [Debug] Last Error Log:\n{final_state.get('error_log')}")
+                
+                if final_state.get("critic_feedback"):
+                    logger.error(f"🔎 [Debug] Critic Feedback:\n{final_state.get('critic_feedback')}")
+
+                logger.error(f"🔎 [Debug] Stats: Retries={final_state.get('retries')}, VisualRetries={final_state.get('visual_retries')}")
+                # ------------------
+
                 metrics.log_scene_finish(scene.scene_id, False, 0, 0)
                 # 可以在这里决定是中断还是插入一个黑色占位视频
                 

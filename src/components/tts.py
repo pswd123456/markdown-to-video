@@ -1,5 +1,5 @@
-import asyncio
-import edge_tts
+import dashscope
+from dashscope.audio.tts import SpeechSynthesizer
 from pathlib import Path
 from src.core.config import settings
 from src.utils.logger import logger
@@ -8,17 +8,16 @@ class TTSEngine:
     def __init__(self):
         self.output_dir = settings.OUTPUT_DIR / "audio"
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        # 使用微软著名的中文语音包 "Yunxi" (男声) 或 "Xiaoxiao" (女声)
-        self.voice = "zh-CN-YunxiNeural" 
-
-    async def _generate_async(self, text: str, file_path: Path):
-        communicate = edge_tts.Communicate(text, self.voice)
-        await communicate.save(str(file_path))
+        
+        # 配置 DashScope
+        dashscope.api_key = settings.DASHSCOPE_API_KEY
+        # 使用 Qwen TTS 模型
+        self.model = "qwen3-tts-flash" 
+        self.voice = "Cherry"
 
     def generate(self, text: str, scene_id: str) -> str:
         """
         生成音频文件，返回路径
-        (Edge-TTS 是异步库，这里封装成同步调用方便主程序使用)
         """
         file_path = self.output_dir / f"{scene_id}.mp3"
         
@@ -26,12 +25,25 @@ class TTSEngine:
             logger.info(f"🔊 [TTS] Using cached audio for {scene_id}")
             return str(file_path)
 
-        logger.info(f"🔊 [TTS] Generating audio for {scene_id} (Edge-TTS)...")
+        logger.info(f"🔊 [TTS] Generating audio for {scene_id} (DashScope Qwen)...")
         try:
-            # 在同步函数中运行异步代码
-            asyncio.run(self._generate_async(text, file_path))
-            return str(file_path)
+            # 尝试使用 qwen-tts 专用调用方式，或者通用方式
+            # 这里使用通用入口，但指定模型和声音
+            result = SpeechSynthesizer.call(
+                model=self.model,
+                text=text,
+                voice=self.voice,
+                format='mp3'
+            )
+            
+            if result.get_audio_data() is not None:
+                with open(file_path, 'wb') as f:
+                    f.write(result.get_audio_data())
+                return str(file_path)
+            else:
+                logger.error(f"⚠️ [TTS] DashScope Failed: {result.message}")
+                return ""
+                
         except Exception as e:
-            logger.error(f"⚠️ [TTS] Edge-TTS Failed: {e}")
-            # 极简回退：生成空文件避免报错，或者抛出异常
+            logger.error(f"⚠️ [TTS] DashScope Exception: {e}")
             return ""

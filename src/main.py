@@ -4,6 +4,7 @@ import os
 from typing import List
 
 from src.core.models import SceneSpec
+from src.core.config import settings
 from src.core.graph import ManimGraph
 from src.components.assembler import Assembler
 from src.components.rewriter import ScriptRewriter
@@ -30,6 +31,13 @@ def load_script(file_path: str) -> List[SceneSpec]:
         rewriter = ScriptRewriter()
         # rewrite() 返回 {"scenes": [dict, ...]}，且已通过 SceneSpec 校验
         result = rewriter.rewrite(content)
+        
+        # Save generated storyboard to output directory
+        output_path = settings.OUTPUT_DIR / "storyboard.json"
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        logger.info(f"💾 Saved generated storyboard to {output_path}")
+
         scenes_data = result.get("scenes", [])
         return [SceneSpec(**item) for item in scenes_data]
     

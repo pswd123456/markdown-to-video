@@ -60,3 +60,16 @@ def test_rewrite_fail_all_retries(mock_llm_client):
         rewriter.rewrite("Draft text", retries=2)
     
     assert mock_llm_client.generate_code.call_count == 2
+
+def test_rewrite_prompt_content(mock_llm_client):
+    mock_llm_client.generate_code.return_value = '{"scenes": []}'
+    
+    rewriter = ScriptRewriter()
+    rewriter.rewrite("Draft text")
+    
+    # Check call args
+    args, _ = mock_llm_client.generate_code.call_args
+    sys_prompt = args[0]
+    
+    assert "Intro" in sys_prompt
+    assert "Summary" in sys_prompt

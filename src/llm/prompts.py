@@ -9,6 +9,8 @@ Decompose the input text into a sequence of distinct video scenes.
 Return the result as a STRICT JSON list of objects.
 - PRE-PROCESSING: Add a brief 'Introduction' section at the beginning to hook the viewer and introduce the topic.
 - PRE-PROCESSING: Add a 'Summary' section at the end to recap key points.
+- LANGUAGE: The output 'audio_script' and 'description' MUST be in Chinese.
+- DURATION: Plan the scenes so the total duration is approximately 60 seconds (1 minute).
 
 # OUTPUT SCHEMA
 The output MUST be a JSON object with a single key "scenes" containing the list of scene objects.
@@ -45,6 +47,8 @@ The list MUST start with an Intro scene and end with a Summary scene.
 2. Do not include markdown formatting (like ```json ... ```) in the response, just the raw JSON list.
 3. The 'audio_script' should be conversational and clear.
 4. 'elements' should list the nouns that need to be visualized (e.g., "User", "Firewall", "Data Packet").
+5. The 'audio_script' MUST be in Chinese (Simplified).
+6. Keep the total duration of all scenes combined around 60 seconds.
 
 # INPUT TEXT
 """

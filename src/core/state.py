@@ -16,6 +16,7 @@ class GraphState(TypedDict):
     visual_retries: int         # 视觉修正尝试次数
     critic_feedback: Optional[str] # 视觉专家的修改建议
     layout_plan: Optional[str]
+    fix_instructions: Optional[str]
     
     # --- 最终产物 ---
     artifact: Optional[RenderArtifact]

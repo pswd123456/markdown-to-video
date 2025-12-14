@@ -1,9 +1,7 @@
 import pytest
-import json
 from unittest.mock import MagicMock
 from src.components.rewriter import ScriptRewriter
 from src.llm.client import LLMClient
-from pydantic import ValidationError
 
 @pytest.fixture
 def mock_llm_client(monkeypatch):

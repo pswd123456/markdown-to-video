@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Literal
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 # --- Enums (为了更好的类型安全) ---

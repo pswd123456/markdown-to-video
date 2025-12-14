@@ -1,7 +1,6 @@
 import pytest
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from src.main import load_script
 from src.core.config import settings
 

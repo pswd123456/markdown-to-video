@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 import shutil
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import patch
 from pathlib import Path
 import sys
 

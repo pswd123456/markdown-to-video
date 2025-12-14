@@ -6,6 +6,7 @@ from pathlib import Path
 from src.core.models import CritiqueFeedback, SceneSpec
 from src.core.config import settings
 from src.llm.client import LLMClient
+from src.llm.prompts import CRITIC_SYSTEM_PROMPT, build_critic_user_prompt
 
 class VisionCritic:
     def __init__(self):
@@ -31,31 +32,8 @@ class VisionCritic:
         base64_image = self._encode_image(image_path)
         
         # 1. 构建 Prompt (强制 JSON 输出)
-        system_prompt = """
-You are a strict Visual QA Specialist for Manim animations.
-Your job is to inspect the last frame of a video and check for layout issues.
-
-CHECKLIST:
-1. Overlaps: Are any text or objects overlapping unintentionally?
-2. Cut-offs: Is any content partially outside the frame (16:9 aspect ratio)?
-3. Legibility: Is the text too small or low contrast?
-4. Completeness: Does the image match the user's description?
-
-OUTPUT FORMAT:
-Return a JSON object ONLY (no markdown formatting):
-{
-    "passed": boolean,
-    "score": int (0-10),
-    "suggestion": "string (If failed, provide a specific Python fix suggestion using 'next_to', 'scale', or 'shift'. If passed, return null)"
-}
-"""
-        
-        user_content = f"""
-User Description: "{scene.description}"
-Main Elements: {', '.join(scene.elements)}
-
-Analyze the attached image based on the checklist.
-"""
+        system_prompt = CRITIC_SYSTEM_PROMPT
+        user_content = build_critic_user_prompt(scene)
 
         # 2. 调用 Vision Model (OpenAI 兼容格式)
         try:

@@ -1,6 +1,5 @@
 # src/components/rewriter.py
 import json
-import logging
 from typing import Dict, Any
 
 from pydantic import ValidationError

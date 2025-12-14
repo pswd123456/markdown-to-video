@@ -1,5 +1,4 @@
 import pytest
-import os
 import json
 from unittest.mock import MagicMock
 from src.main import load_script

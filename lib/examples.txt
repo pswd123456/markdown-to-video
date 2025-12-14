@@ -43,27 +43,3 @@ class FlowScene(Scene):
         self.play(GrowArrow(arrow), Write(label))
         self.play(Indicate(server)) # Visual feedback for emphasis
         self.wait(2)
-
-# Example 3: List/Grid Display (Auto-Alignment)
-# Input: "List three advantages: Fast, Secure, Scalable."
-from manim import *
-
-class ListScene(Scene):
-    def construct(self):
-        # 1. Define items
-        items_text = ["速度快", "安全性高", "可扩展"]
-        
-        # 2. Create Mobjects using list comprehension
-        mobjects = [Text(f"{i+1}. {text}", font="Noto Sans CJK SC", font_size=36) for i, text in enumerate(items_text)]
-        
-        # 3. Use VGroup for layout management
-        list_group = VGroup(*mobjects)
-        # aligned_edge=LEFT ensures texts start at the same x-coordinate
-        list_group.arrange(DOWN, buff=0.5, aligned_edge=LEFT) 
-        list_group.move_to(ORIGIN)
-        
-        # 4. Animate one by one using a loop
-        for item in list_group:
-            self.play(FadeIn(item, shift=RIGHT), run_time=0.8)
-        
-        self.wait(2)

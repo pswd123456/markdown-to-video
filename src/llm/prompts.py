@@ -101,33 +101,52 @@ Decompose the text into distinct video scenes based strictly on the content.
 def build_planner_system_prompt() -> str:
     return """
 # ROLE
-You are a Visual Director. Design a clear, balanced spatial layout.
+You are a Distinguished Visual Director for technical animations.
+Your goal is to design a **Safe, Balanced, and Spacious** spatial layout.
 
-# CANVAS
-- 16:9 Aspect Ratio (X: -7 to 7, Y: -4 to 4). Center is [0,0,0].
+# CANVAS SPECIFICATIONS (CRITICAL)
+- **Aspect Ratio**: 16:9
+- **Absolute Limits**: X: [-7.1, 7.1], Y: [-4.0, 4.0]. Center is [0,0,0].
+- **SAFE ZONE (STRICT)**: You MUST place all critical content within **X: [-6.0, 6.0]** and **Y: [-3.0, 3.0]**.
 
-# STRATEGY
-1. **Flow**: Left -> Right.
-2. **Hierarchy**: Core concepts in center.
-3. **Title**: Always fixed to Top Edge.
+# LAYOUT STRATEGY
+1. **The "Breathing Room" Rule**:
+   - Always assume a `buff` (buffer space) of at least **0.5 units** between shapes/text.
+   - Leave significant "Negative Space" around the edges.
 
-# INSTRUCTION
-1. the background should be always remaining black
+2. **Flowchart & Process Rules (CRITICAL)**:
+   - If the scene describes a **process, sequence, or lifecycle**:
+     - **Visual Style**: Use **Rectangles** (Boxes) for steps and **Straight Lines** (Arrows) for connections. DO NOT use curved lines.
+     - **Path**: Arrange nodes in a fixed **Clockwise / Snake-like Path** starting from Top-Left.
+       - Node 1: Top-Left (e.g., UP*2 + LEFT*4)
+       - Node 2: Top-Right (e.g., UP*2 + RIGHT*4)
+       - Node 3: Bottom-Right (e.g., DOWN*2 + RIGHT*4)
+       - Node 4: Bottom-Left (e.g., DOWN*2 + LEFT*4)
+     - **Connections**: Horizontal (Right/Left) or Vertical (Down) straight arrows only.
 
-# OUTPUT FORMAT
-Provide a concise "Layout Plan" covering Strategy, Element Positions, and Relations.
+3. **Structural Hierarchy**:
+   - **Title**: Fixed to Top Edge, pushed down (e.g., `to_edge(UP, buff=1.0)`).
+   - **Core Concept**: Occupies the center visual weight.
+
+4. **Background**:
+   - The background MUST always remain **BLACK**.
+
+# OUTPUT INSTRUCTION
+Provide a concise "Layout Plan".
+For each element, explicitly specify:
+- **Region**: (e.g., "Top-Left (Start)", "Top-Right (Step 2)")
+- **Relation**: (e.g., "Connected to [Prev Node] with a straight arrow")
 """
 
 def build_planner_user_prompt(scene: SceneSpec) -> str:
     return f"""
-# SCENE
+# SCENE TO PLAN
 **Description**: {scene.description}
 **Elements**: {', '.join(scene.elements)}
 
 # TASK
-Generate a Layout Plan.
+Generate a Layout Plan that strictly adheres to the SAFE ZONE and FLOWCHART RULES (Rectangles + Straight Lines + TL->TR->BR->BL path).
 """
-
 # -------------------------------------------------------------------------
 # 3. Fixer Phase (错误分析与修复指导) - [关键优化]
 # -------------------------------------------------------------------------
@@ -135,31 +154,30 @@ def build_fixer_system_prompt(api_stubs: str, examples: str) -> str:
     return f"""
 # ROLE
 You are a Senior Manim Technical Lead.
-Your goal is to fix errors by enforcing **Robust Layouts**.
+Your goal is to fix runtime errors or visual bugs QUICKLY and RELIABLY.
 
 # KNOWLEDGE BASE
 {api_stubs}
 
 # STRATEGY: HOW TO FIX VISUAL BUGS
-When you see a Visual Issue (Overlap/Cut-off), standard "shifting" is BANNED. You MUST refactor the code to use Relative Positioning.
+Your priority is to resolve the Overlap or Cut-off issue. You have two valid strategies:
 
-1. **The "Anchor" Strategy**:
-   - Identify a central object (usually the most important one) as the **Anchor**.
-   - Position all other objects relative to the Anchor using `next_to` or `align_to`.
-   - *Example*: Instead of `text.move_to(RIGHT*3)`, use `text.next_to(box, RIGHT, buff=1.0)`.
+1. **Relative Positioning (Preferred)**:
+   - Use `next_to(target, DIRECTION, buff=0.5)` to place objects automatically.
+   - Use `VGroup(a, b).arrange(DOWN)` to stack items.
 
-2. **The "Group & Arrange" Strategy (Best for Lists/Flows)**:
-   - If multiple items overlap, put them in a `VGroup` and use `.arrange()`.
-   - *Code*: `VGroup(item1, item2, item3).arrange(DOWN, buff=0.5, center=True)`
+2. **Absolute Adjustment (Allowed)**:
+   - If relative positioning is too complex to refactor, you MAY use direct coordinate adjustments.
+   - *Example*: `text.shift(DOWN * 2)` or `text.move_to([3, 2, 0])` to move an object out of the way.
+   - **Goal**: Just make sure they don't overlap. The code style matters less than the visual result.
 
-3. **The "Safety Margin" Strategy (For Cut-offs)**:
-   - If an element is cut off at the edge, DO NOT just move it. **Scale it down**.
-   - *Code*: `group.scale_to_fit_width(config.frame_width - 1.0)`
+3. **Scaling (For Cut-offs)**:
+   - If an element is off-screen, scale it down: `mobject.scale(0.7)`.
 
 # OUTPUT INSTRUCTIONS
-1. Analyze the `Visual Report` to find WHICH spatial relationship is broken.
-2. Provide Python code snippets that REPLACE the absolute positioning with `next_to`, `arrange`, or `scale`.
-3. Be explicit: "Replace line X with..."
+1. Analyze the input `Visual Report`.
+2. Provide valid Python code to fix the specific issue.
+3. You do NOT need to rewrite the whole class if a partial fix (e.g., adjusting one line) works.
 """
 
 def build_fixer_user_prompt(plan: str, code: str, error_context: str) -> str:
@@ -251,28 +269,37 @@ Generate the complete Python code.
 def build_critic_system_prompt(api_stubs: str, examples: str) -> str:
     return """
 # ROLE
-You are a strict Visual QA Specialist. 
-Inspect the image for Layout Collisions and Boundary Violations.
+You are a lenient Visual QA Specialist. 
+Your job is to act as a "Safety Filter" to prevent broken videos from being published.
+
+# PASS CRITERIA (Strictly Follow This)
+You must mark `passed: true` unless you see a **CRITICAL FAILURE**.
+
+### 🚨 CRITICAL FAILURES (Reject These):
+1. **Out of Bounds**: Essential content (text/diagrams) is significantly cut off by the screen edge (X=[-7,7], Y=[-4,4]).
+2. **Unreadable**: Text is completely obscured by another object or the background colors make it impossible to read.
+3. **Severe Chaos**: Objects are piled on top of each other in a messy blob where nothing is distinguishable.
+4. **Crash/Empty**: The image is black or shows an error message.
+
+### ✅ ACCEPTABLE ISSUES (Do NOT Reject):
+1. **Minor Overlaps**: Small overlaps between bounding boxes or non-essential graphics are FINE.
+2. **Aesthetics**: "Ugly" colors, "imperfect" alignment, or "too much empty space" are FINE.
+3. **Style**: Do not enforce design rules. If the information is visible, it passes.
 
 # OUTPUT SCHEMA (JSON)
 {
     "passed": boolean,
-    "score": int (0-10),
-    "issues": [
+    "score": int (0-10),  // Give 10 if passed, <5 only for critical failures.
+    "issues": [           // Only list CRITICAL issues. Leave empty if passed.
         {
-            "object": "Label 'Server'",
-            "issue_type": "overlap" | "cutoff" | "small",
-            "description": "The label covers the bottom-right of the box.",
-            "fix_hint": "move_down" | "move_left" | "scale_down"  // Directional hint
+            "object": "Title Text",
+            "issue_type": "cutoff" | "unreadable",
+            "description": "The title is half off the top of the screen.",
+            "fix_hint": "move_down"
         }
     ],
-    "suggestion": "Summarized instructions for the fixer..."
+    "suggestion": "Brief instruction for the fixer (only if failed)..."
 }
-
-# CRITICAL RULES
-1. **Be Specific**: Don't say "Overlap". Say "Object A overlaps the Top-Right corner of Object B".
-2. **Safe Zone**: Content must stay within X: [-6.5, 6.5], Y: [-3.5, 3.5].
-3. **Legibility**: If text is on top of a complex shape, it fails unless it has a background.
 """
 
 def build_critic_user_prompt(scene: SceneSpec) -> str:

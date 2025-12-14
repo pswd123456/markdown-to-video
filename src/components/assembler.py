@@ -17,11 +17,18 @@ class Assembler:
         concat_list_path = self.output_dir / "concat_list.txt"
         segment_paths = []
         
+        # Prepare output directories
+        segments_dir = self.output_dir / "segments"
+        segments_dir.mkdir(parents=True, exist_ok=True)
+        
+        raw_clips_dir = self.output_dir / "raw_video_clips"
+        raw_clips_dir.mkdir(parents=True, exist_ok=True)
+
         for i, (art, audio) in enumerate(zip(artifacts, audio_paths)):
             if not art or not Path(art.video_path).exists():
                 continue
             
-            segment_out = self.output_dir / f"segment_{i:03d}.mp4"
+            segment_out = segments_dir / f"segment_{i:03d}.mp4"
             
             # === 步骤 A: 准备音频 (清洗为 WAV 以保证兼容性) ===
             final_audio_input = None
@@ -89,7 +96,7 @@ class Assembler:
         if segment_paths:
             try:
                 resolution = self._get_video_resolution(segment_paths[0])
-                spacer_path = self.output_dir / "black_spacer.mp4"
+                spacer_path = raw_clips_dir / "black_spacer.mp4"
                 if not spacer_path.exists():
                     logger.info(f"   ⚫ Generating 1s black spacer ({resolution})...")
                     self._create_spacer(resolution, 1.0, spacer_path)

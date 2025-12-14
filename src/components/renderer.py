@@ -99,7 +99,9 @@ class ManimRunner:
                 raise RenderError("Render finished but no MP4 file found.")
 
             # 将产物移动到最终的 artifacts 目录，不再保留在 temp
-            final_video_path = self.output_dir / f"{scene_id}.mp4"
+            raw_clips_dir = self.output_dir / "raw_video_clips"
+            raw_clips_dir.mkdir(parents=True, exist_ok=True)
+            final_video_path = raw_clips_dir / f"{scene_id}.mp4"
             shutil.move(str(video_path), str(final_video_path))
 
             # 准备图片输出目录

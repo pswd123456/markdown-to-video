@@ -1,61 +1,75 @@
-# Markdown to Video (Auto Manim Video Generator)
+# Smart Learning: Markdown to Video (Auto Manim Generator)
 
-An automated system that transforms structured JSON scripts into animated videos using [Manim](https://www.manim.community/) and LLMs. This project leverages a self-correcting pipeline powered by [LangGraph](https://langchain-ai.github.io/langgraph/) to generate, lint, and refine animation code.
+An intelligent, autonomous system that transforms educational text scripts into professional-grade animated videos using [Manim](https://www.manim.community/) and Large Language Models (LLMs).
+
+Powered by **LangGraph**, this project features a self-correcting "Agentic" workflow that mimics a real-world animation studio pipeline—comprising a Director (Planner), Animator (Coder), Reviewer (Critic), and Technical Lead (Fixer).
 
 ## 🚀 Key Features
 
-*   **Script-to-Video**: Converts a JSON-based storyboard into a full video.
-*   **Automated Code Generation**: Uses LLMs to generate Manim Python code from natural language scene descriptions.
-*   **Self-Correcting Pipeline**: A robust workflow that includes:
-    *   **Code Generation**: Creates initial animation code.
-    *   **Linter**: Static analysis to catch syntax and import errors early.
-    *   **Renderer**: Executes the code to generate video segments.
-    *   **Critic**: (Optional) Analyzes the output for visual quality and provides feedback for regeneration.
-*   **Text-to-Speech (TTS)**: Automatically generates audio narration for each scene.
-*   **Video Assembly**: Stitches together individual scenes and audio into a final `full_movie.mp4`.
+*   **Script Rewriter**: Automatically converts raw text drafts into structured, scene-by-scene video storyboards.
+*   **Multi-Agent Workflow**:
+    *   **🧠 Planner**: Analyzes the scene requirements and designs a spatial layout strategy before any code is written.
+    *   **👨‍💻 Coder**: Translates the plan into executable Manim (Python) code.
+    *   **👀 Vision Critic**: Uses Multimodal LLMs (e.g., Qwen-VL) to inspect rendered frames for visual bugs (overlaps, cut-offs, legibility) and rejects low-quality output.
+    *   **🔧 Fixer**: A specialized agent that analyzes runtime errors or visual feedback to generate precise repair instructions.
+*   **Dockerized Rendering**: safely executes generated code in an isolated environment to prevent system side-effects.
+*   **Auto-Healing**: The pipeline automatically retries and iterates on failed scenes, learning from error logs and visual feedback.
+*   **Full Production**:
+    *   **TTS Integration**: Generates voiceovers for each scene.
+    *   **Assembler**: Stitches generated video segments and audio into a final polished `full_movie.mp4`.
 
 ## 🛠️ Installation
 
-This project uses [Poetry](https://python-poetry.org/) for dependency management.
+### Prerequisites
+*   Python 3.10+
+*   [Poetry](https://python-poetry.org/)
+*   Docker (for safe rendering)
+*   FFmpeg (for video assembly)
+
+### Setup
 
 ```bash
-# Install dependencies
-poetry install
-```
+# 1. Clone the repository
+git clone https://github.com/your-repo/markdown-to-video.git
+cd markdown-to-video
 
-*Note: You will also need system dependencies for Manim (FFmpeg, LaTeX/TeX Live, etc.) installed on your machine.*
+# 2. Install dependencies
+poetry install
+
+# 3. Configure Environment
+# Copy the example env file and add your API keys (e.g., DashScope/OpenAI)
+cp .env.example .env
+```
 
 ## 📖 Usage
 
-Run the main script with a path to your storyboard JSON file:
+### 1. Basic Usage
+Run the main script with your storyboard file:
 
 ```bash
-poetry run python src/main.py path/to/your/script.json
+poetry run python src/main.py input/my_script.json
 ```
 
-### Input Format
+### 2. Using the Rewriter (Text-to-Video)
+If you only have a rough text draft, use the rewriter to generate the JSON first:
 
-The input file should be a JSON object containing a list of scenes.
+```python
+# (Example usage via code - CLI coming soon)
+from src.components.rewriter import ScriptRewriter
+rewriter = ScriptRewriter()
+script = rewriter.rewrite("Explain the concept of Binary Search using blue boxes.")
+```
 
-**Example `script.json`:**
-
+### Input JSON Format
 ```json
 {
-  "title": "My Explanation Video",
   "scenes": [
     {
       "scene_id": "01_intro",
-      "description": "Show a large blue circle appearing in the center of the screen. Then display the text 'Hello World' above it.",
+      "description": "A title 'Binary Search' appears at the top. A sorted array of numbers 1-10 appears in the center.",
       "duration": 5.0,
-      "elements": ["Blue Circle", "Text"],
-      "audio_script": "Welcome to this demonstration. We start with a simple circle."
-    },
-    {
-      "scene_id": "02_process",
-      "description": "The circle transforms into a square and moves to the left.",
-      "duration": 4.0,
-      "elements": ["Square", "Transformation"],
-      "audio_script": "Next, the shape changes form and moves aside."
+      "elements": ["Title", "Sorted Array"],
+      "audio_script": "Binary search is an efficient algorithm for finding an item from a sorted list of items."
     }
   ]
 }
@@ -63,20 +77,34 @@ The input file should be a JSON object containing a list of scenes.
 
 ## 🏗️ Architecture
 
-The system operates on a scene-by-scene basis:
+The system uses a **StateGraph** to manage the lifecycle of a scene:
 
-1.  **Loader**: Parses the input JSON.
-2.  **TTS Engine**: Generates audio for all scenes.
-3.  **Graph Pipeline**: For each scene:
-    *   Generates code based on `description` and `elements`.
-    *   Validates code (Linter).
-    *   Renders the scene (Manim).
-    *   Retries automatically on failure.
-4.  **Assembler**: Combines video segments and audio tracks.
+```mermaid
+graph TD
+    Start --> Plan
+    Plan --> Generate_Code
+    Generate_Code --> Lint
+    Lint -- Pass --> Render
+    Lint -- Fail --> Fixer
+    Render -- Success --> Critic
+    Render -- Fail --> Fixer
+    Critic -- Approved --> Finish
+    Critic -- Rejected --> Fixer
+    Fixer --> Generate_Code
+```
 
 ## 📂 Project Structure
 
 *   `src/main.py`: Entry point.
-*   `src/components/`: Core logic (Assembler, TTS, Renderer, Linter, Critic).
-*   `src/core/`: Data models and Graph definition.
-*   `src/llm/`: LLM client configuration.
+*   `src/core/graph.py`: The LangGraph definition (Nodes & Edges).
+*   `src/components/`:
+    *   `planner.py`: Layout strategy.
+    *   `critic.py`: Visual Quality Assurance.
+    *   `renderer.py`: Docker interaction.
+    *   `assembler.py`: FFmpeg orchestration.
+*   `output/`: Generated artifacts (videos, plans, debug logs).
+
+## 🌍 Languages
+
+*   [English](README.md)
+*   [中文 (Chinese)](assets/README_cn.md)

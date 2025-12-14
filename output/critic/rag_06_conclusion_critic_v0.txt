@@ -1,0 +1,3 @@
+Passed: False
+Score: 2
+Evidence: 提高文字和对勾图标的亮度或对比度，确保在黑色背景下清晰可见。

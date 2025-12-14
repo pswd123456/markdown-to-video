@@ -1,0 +1,32 @@
+{
+  "rag_02_data": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 0
+  },
+  "rag_05_architecture": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 0
+  },
+  "rag_01_intro": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 0
+  },
+  "rag_03_retrieval": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 0
+  },
+  "rag_04_evaluation": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 0
+  },
+  "rag_06_conclusion": {
+    "success": true,
+    "syntax_retries": 0,
+    "visual_retries": 1
+  }
+}

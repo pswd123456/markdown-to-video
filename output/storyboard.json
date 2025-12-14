@@ -1,0 +1,85 @@
+{
+  "scenes": [
+    {
+      "scene_id": "rag_01_intro",
+      "type": "dynamic",
+      "description": "画面中央出现发光的标题“RAG Practice”，下方浮现“全栈工程实践项目”字样。背景为代码流动的深色界面，左右两侧分别浮现“理论”与“生产级代码”两个标签，并用箭头连接。",
+      "duration": 9.5,
+      "elements": [
+        "Title Text",
+        "Code Background",
+        "Arrow Connectors"
+      ],
+      "audio_script": "RAG Practice 是一个致力于将 RAG 理论转化为生产级代码的全栈工程实践项目。"
+    },
+    {
+      "scene_id": "rag_02_data",
+      "type": "dynamic",
+      "description": "左侧展示一份复杂 PDF 文档图标，右侧出现 Docling 标志。PDF 被解析成带有层级结构的树状图，随后被切割成多个语义块（彩色矩形），每个块标注“语义切片”。",
+      "duration": 8.5,
+      "elements": [
+        "PDF Icon",
+        "Docling Logo",
+        "Tree Structure",
+        "Semantic Chunks"
+      ],
+      "audio_script": "项目采用 Docling 解析复杂 PDF，保留层级结构并进行精细化的语义切片，实现深度数据处理。"
+    },
+    {
+      "scene_id": "rag_03_retrieval",
+      "type": "dynamic",
+      "description": "中央显示 Elasticsearch 图标。左侧飞入蓝色向量图标，右侧飞入橙色 BM25 关键词气泡，二者在 ES 中融合。上方出现 RRF 排序条，随后 TEI 模型图标对结果进行二次重排序，最终输出高亮的“高精度结果”。",
+      "duration": 11.0,
+      "elements": [
+        "Elasticsearch",
+        "Vector Icon",
+        "BM25 Bubble",
+        "RRF Bar",
+        "TEI Model"
+      ],
+      "audio_script": "基于 Elasticsearch 实现混合检索，结合向量与关键词搜索，通过 RRF 融合排序和 TEI 二次重排序，显著提升召回准确率。"
+    },
+    {
+      "scene_id": "rag_04_evaluation",
+      "type": "dynamic",
+      "description": "画面分为三部分：左下角自动生成测试集（齿轮+文档），中间显示 Ragas 的评估指标面板（如 Faithfulness、Answer Relevancy），右上角 Langfuse 展示全链路 Trace 流程图，三者由循环箭头连接形成闭环。",
+      "duration": 10.5,
+      "elements": [
+        "Test Set Generator",
+        "Ragas Dashboard",
+        "Langfuse Trace",
+        "Loop Arrow"
+      ],
+      "audio_script": "集成 Ragas 与 Langfuse，构建从自动生成测试集、量化评估到全链路追踪的自动化闭环评估体系。"
+    },
+    {
+      "scene_id": "rag_05_architecture",
+      "type": "dynamic",
+      "description": "底部展示 FastAPI（后端）与 Next.js（前端）双模块。上方延伸出 Redis 队列图标、父子索引结构图、权限锁图标，顶部悬浮 Docker 容器图标，一键部署动画触发所有组件联动启动。",
+      "duration": 10.0,
+      "elements": [
+        "FastAPI",
+        "Next.js",
+        "Redis Queue",
+        "Parent-Child Index",
+        "Auth Lock",
+        "Docker"
+      ],
+      "audio_script": "项目采用 FastAPI 加 Next.js 构建扎实工程架构，支持异步任务、父子索引、权限管理，并可通过 Docker 一键容器化部署。"
+    },
+    {
+      "scene_id": "rag_06_conclusion",
+      "type": "dynamic",
+      "description": "画面中央出现开发者剪影，周围环绕 RAG 架构图、工程代码、评估指标三大模块。最后聚焦到“参考与实践”文字，背景渐变为绿色对勾图标。",
+      "duration": 7.5,
+      "elements": [
+        "Developer Silhouette",
+        "RAG Diagram",
+        "Code Snippet",
+        "Metrics Panel",
+        "Checkmark"
+      ],
+      "audio_script": "该项目适合希望深入理解 RAG 架构、工程化落地及效果评估的开发者参考与实践。"
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+2025-12-15 03:49:09,344 [INFO] 📄 Detected .md file. Invoking ScriptRewriter...
+2025-12-15 03:49:40,587 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:49:40,592 [INFO] 💾 Saved storyboard to /root/gitrepo/markdown-to-video/output/storyboard.json
+2025-12-15 03:49:40,592 [INFO] 📂 Loaded script with 6 scenes.
+2025-12-15 03:49:40,592 [INFO] 🚀 Initializing Parallel Workflow...
+2025-12-15 03:49:40,829 [INFO] ⚡ Dispatching 6 scenes in parallel...
+2025-12-15 03:49:40,833 [INFO] 🔊 [Node: TTS] Generating audio for rag_01_intro...
+2025-12-15 03:49:40,834 [INFO] 🔊 [Node: TTS] Generating audio for rag_02_data...
+2025-12-15 03:49:40,834 [INFO] 🔊 [TTS] Generating audio for rag_01_intro (DashScope Qwen)...
+2025-12-15 03:49:40,834 [INFO] 🔊 [Node: TTS] Generating audio for rag_03_retrieval...
+2025-12-15 03:49:40,834 [INFO] 🔊 [TTS] Generating audio for rag_02_data (DashScope Qwen)...
+2025-12-15 03:49:40,838 [INFO] 🔊 [TTS] Generating audio for rag_03_retrieval (DashScope Qwen)...
+2025-12-15 03:49:40,840 [INFO] 🔊 [Node: TTS] Generating audio for rag_04_evaluation...
+2025-12-15 03:49:40,841 [INFO] 🔊 [TTS] Generating audio for rag_04_evaluation (DashScope Qwen)...
+2025-12-15 03:49:40,843 [INFO] 🔊 [Node: TTS] Generating audio for rag_05_architecture...
+2025-12-15 03:49:40,845 [INFO] 🔊 [TTS] Generating audio for rag_05_architecture (DashScope Qwen)...
+2025-12-15 03:49:40,845 [INFO] 🔊 [Node: TTS] Generating audio for rag_06_conclusion...
+2025-12-15 03:49:40,849 [INFO] 🔊 [TTS] Generating audio for rag_06_conclusion (DashScope Qwen)...
+2025-12-15 03:49:43,164 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/1d/d7/20251215/d2033070/15515629-95f9-4aa3-bd98-6ddf77394b88.wav?Expires=1765828183&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=5W7ER%2FvO2Kimo4fCwY6qUBOIxxQ%3D
+2025-12-15 03:49:43,257 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-wlcb.oss-cn-wulanchabu.aliyuncs.com/1d/61/20251215/1d4aed5f/01895cf4-0f45-4da0-b9b9-c04ae3c72e14.wav?Expires=1765828183&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=kjgCuPcuhPTSz9jns8JlNBIungc%3D
+2025-12-15 03:49:43,476 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/1d/4b/20251215/d2033070/a00910b9-0a3b-43a2-a1cd-980b0a0e4a85.wav?Expires=1765828183&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=0rf6aaumqCk7UrbxZUaOZXM2yVM%3D
+2025-12-15 03:49:43,677 [INFO]    ⏱️ [TTS] Updated rag_06_conclusion duration to 7.78s
+2025-12-15 03:49:43,678 [INFO] 🤔 [Node: Planner] rag_06_conclusion
+2025-12-15 03:49:43,803 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/1d/4c/20251215/d2033070/1f9d2aeb-1a7b-4e97-84f8-b4accbfd5025.wav?Expires=1765828183&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=B4xS%2BUhbXbmGOVfsQg8ZKr%2BIkfY%3D
+2025-12-15 03:49:43,818 [INFO]    ⏱️ [TTS] Updated rag_01_intro duration to 8.18s
+2025-12-15 03:49:43,819 [INFO] 🤔 [Node: Planner] rag_01_intro
+2025-12-15 03:49:43,957 [INFO]    ⏱️ [TTS] Updated rag_02_data duration to 9.06s
+2025-12-15 03:49:43,958 [INFO] 🤔 [Node: Planner] rag_02_data
+2025-12-15 03:49:44,054 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-wlcb.oss-cn-wulanchabu.aliyuncs.com/1d/3e/20251215/1d4aed5f/ddf68788-7358-4733-a9e1-4016f2c2ea7a.wav?Expires=1765828183&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=KOIekSuxvFrfXuDnp2b9%2B6RmxSg%3D
+2025-12-15 03:49:44,292 [INFO] 🔊 [TTS] Downloading audio from http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/1d/07/20251215/d2033070/e1c55566-3549-41b8-a566-257317ad9f2f.wav?Expires=1765828184&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=RzhOltz0RO%2Fptab8frXqsuk%2BzUw%3D
+2025-12-15 03:49:44,415 [INFO]    ⏱️ [TTS] Updated rag_04_evaluation duration to 10.34s
+2025-12-15 03:49:44,416 [INFO] 🤔 [Node: Planner] rag_04_evaluation
+2025-12-15 03:49:44,769 [INFO]    ⏱️ [TTS] Updated rag_03_retrieval duration to 11.38s
+2025-12-15 03:49:44,770 [INFO] 🤔 [Node: Planner] rag_03_retrieval
+2025-12-15 03:49:44,909 [INFO]    ⏱️ [TTS] Updated rag_05_architecture duration to 12.26s
+2025-12-15 03:49:44,910 [INFO] 🤔 [Node: Planner] rag_05_architecture
+2025-12-15 03:49:59,299 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:49:59,301 [INFO] 🤖 [Node: Coder] rag_02_data
+2025-12-15 03:50:00,956 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:00,958 [INFO] 🤖 [Node: Coder] rag_01_intro
+2025-12-15 03:50:08,093 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:08,096 [INFO] 🤖 [Node: Coder] rag_05_architecture
+2025-12-15 03:50:09,158 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:09,159 [INFO] 🤖 [Node: Coder] rag_06_conclusion
+2025-12-15 03:50:10,390 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:10,392 [INFO] 🤖 [Node: Coder] rag_04_evaluation
+2025-12-15 03:50:12,208 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:12,209 [INFO] 🤖 [Node: Coder] rag_03_retrieval
+2025-12-15 03:50:25,774 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:29,026 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:38,820 [INFO] 👀 [Node: Critic] rag_02_data
+2025-12-15 03:50:39,342 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:40,460 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:40,466 [INFO] 🔧 [Node: Fixer] rag_06_conclusion
+2025-12-15 03:50:41,693 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:49,665 [INFO] 👀 [Node: Critic] rag_05_architecture
+2025-12-15 03:50:51,469 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:53,882 [INFO] 👀 [Node: Critic] rag_01_intro
+2025-12-15 03:50:55,305 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:50:57,402 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:00,428 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:04,942 [INFO] 👀 [Node: Critic] rag_03_retrieval
+2025-12-15 03:51:06,706 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:08,552 [INFO] 👀 [Node: Critic] rag_04_evaluation
+2025-12-15 03:51:10,433 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:16,283 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:16,285 [INFO] 🤖 [Node: Coder] rag_06_conclusion
+2025-12-15 03:51:52,950 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:51:59,176 [INFO] 👀 [Node: Critic] rag_06_conclusion
+2025-12-15 03:52:05,396 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:52:05,398 [INFO] 🔧 [Node: Fixer] rag_06_conclusion
+2025-12-15 03:52:46,207 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:52:46,210 [INFO] 🤖 [Node: Coder] rag_06_conclusion
+2025-12-15 03:53:08,285 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:53:14,648 [INFO] 👀 [Node: Critic] rag_06_conclusion
+2025-12-15 03:53:16,151 [INFO] HTTP Request: POST https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2025-12-15 03:53:16,157 [INFO] ✅ Workflow finished. Collected 6 artifacts.
+2025-12-15 03:53:16,157 [INFO] 
+🧩 Assembling final video...
+2025-12-15 03:53:16,157 [INFO] 🎞️ [Assembler] Starting assembly...
+2025-12-15 03:53:17,103 [INFO]    ✅ Segment 0 assembled.
+2025-12-15 03:53:17,990 [INFO]    ✅ Segment 1 assembled.
+2025-12-15 03:53:18,770 [INFO]    ✅ Segment 2 assembled.
+2025-12-15 03:53:19,410 [INFO]    ✅ Segment 3 assembled.
+2025-12-15 03:53:20,246 [INFO]    ✅ Segment 4 assembled.
+2025-12-15 03:53:20,775 [INFO]    ✅ Segment 5 assembled.
+2025-12-15 03:53:20,847 [INFO]    ⚫ Generating 1s black spacer (854x480)...
+2025-12-15 03:53:21,049 [INFO] ✨ Final video saved to: /root/gitrepo/markdown-to-video/output/full_movie.mp4
+2025-12-15 03:53:21,049 [INFO] 
+========================================
+2025-12-15 03:53:21,049 [INFO] 📊 EXECUTION SUMMARY (Duration: 0:04:11.870091)
+2025-12-15 03:53:21,049 [INFO]    Success Rate: 6/6
+2025-12-15 03:53:21,050 [INFO]    Total Syntax Retries (Linter): 0
+2025-12-15 03:53:21,050 [INFO]    Total Visual Retries (Critic): 1
+2025-12-15 03:53:21,050 [INFO] ========================================
+
+2025-12-15 03:53:21,050 [INFO] 📝 Metrics report saved to: /root/gitrepo/markdown-to-video/output/report_20251215_035321.json

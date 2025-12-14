@@ -56,9 +56,11 @@ class Assembler:
                 cmd.extend(["-i", final_audio_input])
                 cmd.extend([
                     "-map", "0:v", "-map", "1:a",
+                    # 添加 tpad 滤镜：stop_mode=clone 表示克隆最后一帧，stop_duration=60 表示最多补60秒（足够覆盖语音延迟）
+                    "-vf", "tpad=stop_mode=clone:stop_duration=60", 
                     "-c:v", "libx264", "-pix_fmt", "yuv420p",
                     "-c:a", "aac", "-b:a", "192k",
-                    "-shortest"
+                    "-shortest" # 配合 tpad 使用，当音频结束时，视频流（已被无限延长）也会在此刻截断
                 ])
             else:
                 # 无音频，生成静音

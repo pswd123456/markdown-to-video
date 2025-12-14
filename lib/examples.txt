@@ -1,32 +1,49 @@
-Example 1: A simple circle animation
-Input: "Draw a red circle."
+Example 1: Structured Layout with VGroup
+Input: "Display three steps: Input, Process, Output horizontally."
 Code:
 ```python
 from manim import *
 class GenScene(Scene):
     def construct(self):
-        c = Circle(color=RED)
-        self.play(Create(c))
-        self.wait(1)
-
-Example 2: Text relative positioning Input: "Show 'Hello' above a square." Code:
-from manim import *
-class GenScene(Scene):
-    def construct(self):
-        sq = Square()
-        txt = Text("Hello", font="Noto Sans CJK SC").next_to(sq, UP, buff=0.5)
-        self.play(Create(sq))
-        self.play(Write(txt))
+        # 1. Create Title
+        title = Text("Data Flow", font="Noto Sans CJK SC", font_size=48, color=BLUE)
+        title.to_edge(UP) # Fix to top edge
+        
+        # 2. Create Elements
+        t1 = Text("Input", font="Noto Sans CJK SC")
+        t2 = Text("Process", font="Noto Sans CJK SC")
+        t3 = Text("Output", font="Noto Sans CJK SC")
+        
+        # 3. Use VGroup for layout (Auto-spacing)
+        group = VGroup(t1, t2, t3)
+        group.arrange(RIGHT, buff=2.0) # Automatically arrange horizontally
+        group.move_to(ORIGIN) # Center the whole group
+        
+        # 4. Add visual flair (Arrows)
+        arrow1 = Arrow(t1.get_right(), t2.get_left(), color=GREY)
+        arrow2 = Arrow(t2.get_right(), t3.get_left(), color=GREY)
+        
+        self.play(Write(title))
+        self.play(FadeIn(group))
+        self.play(GrowArrow(arrow1), GrowArrow(arrow2))
         self.wait(2)
+```
 
-Example 3: Chinese Text
-Input: "Display '你好' in the center."
+Example 2: Focusing on Content Input: "Highlight the database server." 
 Code:
 ```python
 from manim import *
 class GenScene(Scene):
     def construct(self):
-        txt = Text("你好", font="Noto Sans CJK SC")
-        self.play(Write(txt))
+        server = Square(color=TEAL, fill_opacity=0.5)
+        label = Text("Server", font="Noto Sans CJK SC", font_size=36).next_to(server, DOWN)
+        
+        self.add(server, label)
+        self.wait(0.5)
+        
+        # Highlight logic
+        box = SurroundingRectangle(server, color=YELLOW, buff=0.2)
+        self.play(Create(box))
+        self.play(Indicate(server)) # Flash highlight
         self.wait(1)
 ```

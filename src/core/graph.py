@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph, END
 from typing import Literal, Dict, Any
 
+from src.core.config import settings
 from src.core.state import GraphState
 from src.core.models import CodeGenerationRequest
 from src.components.context_builder import ContextBuilder
@@ -87,6 +88,20 @@ class ManimGraph:
             return {"critic_feedback": None}
         else:
             print(f"   ❌ Visual QC Failed (Score: {feedback.score}): {feedback.suggestion}")
+            
+            # Save failed code to output/debug/
+            debug_dir = settings.OUTPUT_DIR / "debug"
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            
+            vis_try = state.get("visual_retries", 0)
+            scene_id = state["scene_spec"].scene_id
+            
+            # Save the code
+            code_path = debug_dir / f"scene_{scene_id}_failed_vis_retry_{vis_try}.py"
+            with open(code_path, "w", encoding="utf-8") as f:
+                f.write(state["code"] or "")
+            print(f"   💾 Saved erroneous code to {code_path}")
+
             return {"critic_feedback": feedback.suggestion}
 
     # --- Helper Nodes ---

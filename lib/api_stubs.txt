@@ -1,24 +1,51 @@
-# CORE OBJECTS
+# [lib/api_stubs.txt]
+
+# CORE & LAYOUT
 class Scene(object):
     def construct(self): pass
     def play(self, *animations, run_time=1.0): pass
     def wait(self, duration=1.0): pass
     def add(self, *mobjects): pass
 
-# GEOMETRY
+class VGroup(VMobject):
+    # Powerful layout tool
+    def __init__(self, *mobjects): pass
+    def arrange(self, direction=RIGHT, buff=0.5, center=True): pass
+    def next_to(self, target, direction, buff=0.5): pass
+    def to_edge(self, edge, buff=0.5): pass
+    def to_corner(self, corner, buff=0.5): pass
+    def shift(self, vector): pass
+    def scale(self, scale_factor): pass
+
+# GEOMETRY & SHAPES
 class Circle(VMobject):
-    def __init__(self, radius=1.0, color=RED): pass
+    def __init__(self, radius=1.0, color=RED, fill_opacity=0.5): pass
 class Square(VMobject):
-    def __init__(self, side_length=2.0, color=BLUE): pass
+    def __init__(self, side_length=2.0, color=BLUE, fill_opacity=0.5): pass
+class Rectangle(VMobject):
+    def __init__(self, width=4.0, height=2.0, color=WHITE): pass
+class RoundedRectangle(VMobject):
+    def __init__(self, corner_radius=0.5, **kwargs): pass
+class Arrow(VMobject):
+    def __init__(self, start, end, color=GOLD): pass
+class Line(VMobject):
+    def __init__(self, start, end): pass
+class SurroundingRectangle(VMobject):
+    def __init__(self, mobject, color=YELLOW, buff=0.2): pass
+
+# TEXT
 class Text(VMobject):
-    def __init__(self, text, font="Noto Sans CJK SC", font_size=48): pass
+    def __init__(self, text, font="Noto Sans CJK SC", font_size=48, color=WHITE): pass
 
 # ANIMATIONS
 class Create(Animation): pass
 class FadeIn(Animation): pass
+class FadeOut(Animation): pass
 class Write(Animation): pass
+class Transform(Animation): pass
+class ReplacementTransform(Animation): pass
+class Indicate(Animation): pass # Good for highlighting
 
-# POSITIONING (Important!)
-# obj.next_to(target, direction, buff=0.5)
-# obj.move_to(point_or_mobject)
-# obj.align_to(target, direction)
+# CONSTANTS
+# UP, DOWN, LEFT, RIGHT, UL, UR, DL, DR, ORIGIN
+# RED, BLUE, GREEN, YELLOW, GOLD, TEAL, MAROON, PURPLE, GREY, WHITE, BLACK

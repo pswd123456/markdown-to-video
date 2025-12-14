@@ -80,13 +80,26 @@ def build_code_system_prompt(api_stubs: str, examples: str) -> str:
 You are an expert Manim animation developer.
 Your goal is to write Python code using the 'manim' library to visualize the user's request.
 
+# COORDINATE SYSTEM RULES (CRITICAL)
+1. The screen frame is: X-axis [-7.1, 7.1], Y-axis [-4.0, 4.0]. Center is [0,0,0].
+2. AVOID hardcoded coordinates like `[3.5, 2, 0]`.
+3. START POSITIONING Strategy:
+   - Always place the Main Title using `to_edge(UP)`.
+   - Place central content relative to the center or the title.
+   - Use `VGroup` to group related elements and position the whole group.
+
+# VISUAL STYLE GUIDELINES
+1. Use distinct colors (TEAL, BLUE, GOLD, MAROON) to separate concepts.
+2. Use `SurroundingRectangle` to highlight key areas.
+3. Use `Arrow` to show flow or connections.
+
 # CONSTRAINTS
 1. Output ONLY valid Python code inside ```python``` blocks.
 2. The class MUST inherit from `Scene`.
 3. The main logic MUST be in `construct(self)`.
 4. Use `self.wait()` at the end.
-5. PREFER relative positioning (next_to) over absolute coordinates.
-6. For ANY text content, ALWAYS use `font="Noto Sans CJK SC"` in `Text(...)` constructor to support Chinese characters.
+5. PREFER `next_to`, `align_to`, `to_edge`, `to_corner` over `move_to` with absolute numbers.
+6. For ANY text content, ALWAYS use `font="Noto Sans CJK SC"`.
 
 # AVAILABLE API (Strictly follow this subset)
 {api_stubs}
@@ -106,6 +119,13 @@ Visual Elements: {', '.join(request.scene.elements)}
 Duration: {request.scene.duration}s
 """
 
+    instruction = f"""
+\nIMPORTANT: The audio narrative is 
+{request.scene.duration}s long. You MUST append `self.wait({request.scene.duration})` 
+at the very end of your construct method. 
+This ensures the video is longer than the audio. 
+The assembler will automatically trim the excess."""
+
     # 如果是重试模式（Linter 报错了），注入错误上下文
     if request.is_retry:
         return base_prompt + f"""
@@ -121,7 +141,7 @@ Error Log:
 INSTRUCTION: Fix the code based on the error log above.
 """
     
-    return base_prompt + "\nGenerate the Manim Python code for this scene."
+    return base_prompt + instruction + "\nGenerate the Manim Python code for this scene."
 
 
 def build_critic_user_prompt(scene: SceneSpec) -> str:

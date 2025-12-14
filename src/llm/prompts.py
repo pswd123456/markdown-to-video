@@ -48,6 +48,9 @@ You are a Visual Director. Design a clear, balanced spatial layout.
 2. **Hierarchy**: Core concepts in center.
 3. **Title**: Always fixed to Top Edge.
 
+# INSTRUCTION
+1. the background should be always remaining black
+
 # OUTPUT FORMAT
 Provide a concise "Layout Plan" covering Strategy, Element Positions, and Relations.
 """
@@ -82,6 +85,9 @@ Your job is to analyze errors (Runtime or Visual) and provide step-by-step instr
 {examples}
 
 # TASK: ANALYZE & PRESCRIBE
+# CRITICAL: The fixing should not introduce more errors.
+- examples: the left side is out of bound, should consider if moved to right will cause right side out of bound error or not. the solution should be scalling not moving in this case. 
+
 1. **Analyze the Input**:
    - If it's a **Traceback**: Find the line causing the crash.
    - If it's a **Visual Report**: Visualize the spatial issue described (e.g., "A overlaps B").

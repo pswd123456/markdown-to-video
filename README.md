@@ -1,5 +1,10 @@
 # Smart Learning: Markdown to Video (Auto Manim Generator)
 
+## 🌍 Languages
+
+*   [English](README.md)
+*   [中文 (Chinese)](assets/README_cn.md)
+
 An intelligent, autonomous system that transforms educational text scripts into professional-grade animated videos using [Manim](https://www.manim.community/) and Large Language Models (LLMs).
 
 Powered by **LangGraph**, this project features a self-correcting "Agentic" workflow that mimics a real-world animation studio pipeline—comprising a Director (Planner), Animator (Coder), Reviewer (Critic), and Technical Lead (Fixer).
@@ -103,8 +108,3 @@ graph TD
     *   `renderer.py`: Docker interaction.
     *   `assembler.py`: FFmpeg orchestration.
 *   `output/`: Generated artifacts (videos, plans, debug logs).
-
-## 🌍 Languages
-
-*   [English](README.md)
-*   [中文 (Chinese)](assets/README_cn.md)

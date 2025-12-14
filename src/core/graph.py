@@ -105,8 +105,19 @@ class ManimGraph:
     # --- Node: Render ---
     def node_render(self, state: GraphState) -> Dict[str, Any]:
         print("🎨 [Node: Render] Rendering in Docker...")
+        
+        scene_id = state["scene_spec"].scene_id
+        vis_try = state.get("visual_retries", 0)
+        
+        # If it's a retry, use a different filename to avoid overwriting
+        if vis_try > 0:
+            render_id = f"{scene_id}_retried_{vis_try:02d}"
+            print(f"   🔄 Retry #{vis_try}: Rendering as {render_id}")
+        else:
+            render_id = scene_id
+
         try:
-            artifact = self.runner.render(state["code"], state["scene_spec"].scene_id)
+            artifact = self.runner.render(state["code"], render_id)
             return {"artifact": artifact, "error_log": None}
         except Exception as e:
             return {"error_log": str(e), "artifact": None}

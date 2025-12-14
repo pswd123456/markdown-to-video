@@ -102,7 +102,11 @@ class ManimRunner:
             final_video_path = self.output_dir / f"{scene_id}.mp4"
             shutil.move(str(video_path), str(final_video_path))
 
-            final_image_path = self.output_dir / f"{scene_id}.png"
+            # 准备图片输出目录
+            img_dir = self.output_dir / "picture"
+            img_dir.mkdir(parents=True, exist_ok=True)
+            final_image_path = img_dir / f"{scene_id}.png"
+
             try:
                 # 使用 ffmpeg 提取最后一帧
                 # -sseof -3: 从末尾前3秒开始找（防止正好切到黑屏结束帧，取倒数第2-3帧比较保险）

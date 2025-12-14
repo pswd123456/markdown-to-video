@@ -1,15 +1,17 @@
 import sys
 from pathlib import Path
+import pytest
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 
-from unittest.mock import MagicMock
-from src.core.graph import ManimGraph
+from unittest.mock import MagicMock, AsyncMock
+from src.core.graph import ParallelManimFlow
 from src.core.models import SceneSpec, RenderArtifact, CritiqueFeedback, SceneType
 
-def test_node_critic_saves_debug_code(tmp_path, monkeypatch):
+@pytest.mark.asyncio
+async def test_node_critic_saves_debug_code(tmp_path, monkeypatch):
     # 1. Setup Environment: Mock output directory
     mock_output = tmp_path / "output"
     mock_output.mkdir()
@@ -21,8 +23,8 @@ def test_node_critic_saves_debug_code(tmp_path, monkeypatch):
     # 2. Setup Graph and Critic Mock
     # We instantiate ManimGraph. If it interacts with external APIs in init, we might need more mocking.
     # Assuming __init__ is safe (just object creation).
-    graph = ManimGraph()
-    graph.critic = MagicMock()
+    graph = ParallelManimFlow()
+    graph.critic = AsyncMock() # Change to AsyncMock
     
     # Configure mock to fail
     mock_suggestion = "Colors are too dark."
@@ -61,7 +63,7 @@ def test_node_critic_saves_debug_code(tmp_path, monkeypatch):
     }
     
     # 4. Execute Node
-    result = graph.node_critic(state)
+    result = await graph.node_critic(state) # await the async function
     
     # 5. Verify Result
     assert result["critic_feedback"] == mock_suggestion

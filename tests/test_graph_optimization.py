@@ -1,6 +1,6 @@
-
-from unittest.mock import MagicMock
-from src.core.graph import ManimGraph
+import pytest
+from unittest.mock import MagicMock, AsyncMock
+from src.core.graph import ParallelManimFlow
 from src.core.state import GraphState
 from src.core.models import CritiqueFeedback, SceneSpec
 
@@ -9,19 +9,24 @@ class MockArtifact:
     def __init__(self, path):
         self.last_frame_path = path
 
-def test_visual_retry_optimization():
+@pytest.mark.asyncio
+async def test_visual_retry_optimization():
     """
     Verify that when MAX_VISUAL_RETRIES is reached, the graph 
     skips the final expensive Critic call and finishes.
     """
-    graph = ManimGraph()
+    graph = ParallelManimFlow()
     
     # 1. Setup Mocks
     
     # Mock LLM generation to return dummy code
-    graph.llm = MagicMock()
-    graph.llm.generate_code.return_value = "```python\nclass MyScene(Scene): pass\n```"
+    graph.coder_llm = AsyncMock()
+    graph.coder_llm.generate_code.return_value = "```python\nclass MyScene(Scene): pass\n```"
     
+    # Mock Planner LLM as it's called in node_plan_layout
+    graph.planner_llm = AsyncMock()
+    graph.planner_llm.generate_text.return_value = "## Layout Plan\n\nDummy plan"
+
     # Mock Linter to always pass
     graph.linter = MagicMock()
     mock_lint_res = MagicMock()
@@ -30,11 +35,12 @@ def test_visual_retry_optimization():
     
     # Mock Runner to return a dummy artifact
     graph.runner = MagicMock()
-    graph.runner.render.return_value = MockArtifact("/tmp/fake_image.png")
+    # graph.runner.render needs to be awaitable
+    graph.runner.render = AsyncMock(return_value=MockArtifact("/tmp/fake_image.png"))
     
     # Mock Critic to ALWAYS FAIL
     # This forces the graph to retry until max retries
-    graph.critic = MagicMock()
+    graph.critic = AsyncMock()
     graph.critic.review_layout.return_value = CritiqueFeedback(
         passed=False, 
         score=0, 
@@ -75,7 +81,7 @@ def test_visual_retry_optimization():
     
     # Run the graph
     # We expect it to finish.
-    app.invoke(initial_state)
+    await app.ainvoke(initial_state)
 
     
     # 4. Assertions

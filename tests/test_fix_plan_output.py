@@ -1,20 +1,21 @@
 # tests/test_fix_plan_output.py
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
-from src.core.graph import ManimGraph
+from src.core.graph import ParallelManimFlow
 from src.core.state import GraphState
 from src.core.models import SceneSpec
 from src.core.config import settings
 
 @pytest.fixture
 def manim_graph_instance(tmp_path, monkeypatch):
-    with patch('src.llm.client.LLMClient') as MockLLMClient, \
-         patch('src.components.context_builder.ContextBuilder') as MockContextBuilder:
+    with patch('src.core.graph.LLMClient') as MockLLMClient, \
+         patch('src.core.graph.ContextBuilder') as MockContextBuilder:
         
         # Configure mocks
+        # MockLLMClient is the class, its return_value is the instance
         mock_llm_client = MockLLMClient.return_value
-        mock_llm_client.generate_text.return_value = "Mock fix instructions"
+        mock_llm_client.generate_text = AsyncMock(return_value="Mock fix instructions")
         
         mock_context_builder = MockContextBuilder.return_value
         mock_context_builder.api_stubs = "mock_api_stubs"
@@ -25,12 +26,13 @@ def manim_graph_instance(tmp_path, monkeypatch):
         mock_output.mkdir()
         monkeypatch.setattr(settings, "OUTPUT_DIR", mock_output)
 
-        # Instantiate ManimGraph
-        graph = ManimGraph()
-        graph.planner_llm = mock_llm_client # Ensure the actual instance uses the mock
+        # Instantiate ParallelManimFlow
+        graph = ParallelManimFlow()
+        # graph.planner_llm is already mock_llm_client because of the patch
         return graph, mock_llm_client
 
-def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
+@pytest.mark.asyncio
+async def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
     graph, mock_llm_client = manim_graph_instance
     
     scene_spec = SceneSpec(
@@ -50,7 +52,7 @@ def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
     )
 
     # Call the node_analyze_error function
-    result = graph.node_analyze_error(state)
+    result = await graph.node_analyze_error(state)
 
     # Assert that fix_instructions are returned
     assert "fix_instructions" in result
@@ -69,7 +71,8 @@ def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
     expected_content = f"# Fix Plan (Runtime_Linter)\n\n## Input Error Context\n{expected_error_context}\n\n## Generated Instructions\nMock fix instructions"
     assert content == expected_content
 
-def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
+@pytest.mark.asyncio
+async def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
     graph, mock_llm_client = manim_graph_instance
     
     scene_spec = SceneSpec(
@@ -89,7 +92,7 @@ def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
     )
 
     # Call the node_analyze_error function
-    result = graph.node_analyze_error(state)
+    result = await graph.node_analyze_error(state)
 
     # Assert that fix_instructions are returned
     assert "fix_instructions" in result

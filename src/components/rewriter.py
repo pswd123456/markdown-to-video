@@ -15,7 +15,7 @@ class ScriptRewriter:
     def __init__(self):
         self.llm_client = LLMClient(model=settings.REWRITER_MODEL)
 
-    def rewrite(self, markdown_draft: str, retries: int = 3) -> Dict[str, Any]:
+    async def rewrite(self, markdown_draft: str, retries: int = 3) -> Dict[str, Any]:
         """
         Rewrites a non-structured Markdown/text draft into a structured JSON storyboard.
 
@@ -35,7 +35,7 @@ class ScriptRewriter:
 
         for attempt in range(retries):
             try:
-                raw_response = self.llm_client.generate_code(system_prompt, user_prompt)
+                raw_response = await self.llm_client.generate_code(system_prompt, user_prompt)
                 
                 # Post-processing: Extract JSON using code_ops
                 json_str = extract_json(raw_response)

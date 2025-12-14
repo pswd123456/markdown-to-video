@@ -1,29 +1,30 @@
-from openai import OpenAI
+from openai import AsyncOpenAI
 from src.core.config import settings
 
 class LLMClient:
     def __init__(self, model: str = None):
-        self.client = OpenAI(
+        # 使用异步客户端 AsyncOpenAI
+        self.client = AsyncOpenAI(
             api_key=settings.DASHSCOPE_API_KEY,
             base_url=settings.DASHSCOPE_BASE_URL
         )
-        self.model = model if model else settings.CODER_MODEL # e.g., "qwen3-coder-plus"
+        self.model = model if model else settings.CODER_MODEL
 
-    def generate_code(self, system_prompt: str, user_prompt: str) -> str:
+    async def generate_code(self, system_prompt: str, user_prompt: str) -> str:
         """
-        调用大模型生成代码
+        [Async] 调用大模型生成代码
         """
-        return self._call_llm(system_prompt, user_prompt, temperature=0.2)
+        return await self._call_llm(system_prompt, user_prompt, temperature=0.2)
 
-    def generate_text(self, system_prompt: str, user_prompt: str) -> str:
+    async def generate_text(self, system_prompt: str, user_prompt: str) -> str:
         """
-        调用大模型生成普通文本 (如 Plan)
+        [Async] 调用大模型生成普通文本 (如 Plan)
         """
-        return self._call_llm(system_prompt, user_prompt, temperature=0.5)
+        return await self._call_llm(system_prompt, user_prompt, temperature=0.5)
 
-    def _call_llm(self, system_prompt: str, user_prompt: str, temperature: float) -> str:
+    async def _call_llm(self, system_prompt: str, user_prompt: str, temperature: float) -> str:
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},

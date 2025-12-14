@@ -1,6 +1,7 @@
 # src/components/critic.py
 import base64
 import json
+import asyncio
 from pathlib import Path
 
 from src.core.models import CritiqueFeedback, SceneSpec
@@ -11,6 +12,7 @@ from src.llm.prompts import build_critic_system_prompt, build_critic_user_prompt
 
 class VisionCritic:
     def __init__(self):
+        # 这里的 LLMClient 已经是异步版本了
         self.llm_client = LLMClient()
         self.model = settings.CRITIC_MODEL
         
@@ -36,10 +38,16 @@ class VisionCritic:
         with open(path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    def review_layout(self, image_path: str, scene: SceneSpec) -> CritiqueFeedback:
+    async def review_layout(self, image_path: str, scene: SceneSpec) -> CritiqueFeedback:
+        """
+        [Async] 视觉审查
+        """
         print(f"👀 [Critic] Reviewing image: {image_path}")
         
+        # 图片编码是 CPU 密集型操作，但对于单张图片通常很快。
+        # 如果图片很大，可以考虑 await asyncio.to_thread(self._encode_image, image_path)
         base64_image = self._encode_image(image_path)
+        
         if not base64_image:
             print("   ⚠️ Image not found, skipping critique.")
             return CritiqueFeedback(passed=True, score=10, suggestion=None)
@@ -50,7 +58,9 @@ class VisionCritic:
         user_content = build_critic_user_prompt(scene)
 
         try:
-            response = self.llm_client.client.chat.completions.create(
+            # 关键修复: 这里使用 await 调用异步的 LLMClient
+            # 注意：LLMClient.client 是 AsyncOpenAI 实例
+            response = await self.llm_client.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -84,4 +94,5 @@ class VisionCritic:
 
         except Exception as e:
             print(f"⚠️ [Critic] Validation failed due to API error: {e}")
+            # 出错时默认通过，避免卡死流水线，但分数给低一点
             return CritiqueFeedback(passed=True, score=5, suggestion=None)

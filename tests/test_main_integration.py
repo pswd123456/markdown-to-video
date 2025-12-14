@@ -1,16 +1,23 @@
 import pytest
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock, patch
 from src.main import load_script
 from src.core.models import SceneSpec
+from src.components.rewriter import ScriptRewriter
 
 @pytest.fixture
 def mock_rewriter(monkeypatch):
-    mock_cls = MagicMock()
-    monkeypatch.setattr("src.main.ScriptRewriter", mock_cls)
-    return mock_cls
+    # Mock the ScriptRewriter class itself
+    mock_rewriter_class = MagicMock(spec=ScriptRewriter)
+    # Mock the rewrite method to be an AsyncMock
+    mock_rewrite_method = AsyncMock()
+    mock_rewriter_class.return_value.rewrite = mock_rewrite_method
+    
+    monkeypatch.setattr("src.main.ScriptRewriter", mock_rewriter_class)
+    return mock_rewrite_method # Return the mock of the rewrite method
 
-def test_load_script_json(tmp_path):
+@pytest.mark.asyncio
+async def test_load_script_json(tmp_path):
     # Setup
     data = {
         "scenes": [
@@ -28,17 +35,18 @@ def test_load_script_json(tmp_path):
         json.dump(data, f)
         
     # Execution
-    scenes = load_script(str(file_path))
+    scenes = await load_script(str(file_path))
     
     # Verification
     assert len(scenes) == 1
     assert isinstance(scenes[0], SceneSpec)
     assert scenes[0].scene_id == "s1"
 
-def test_load_script_md_integration(tmp_path, mock_rewriter):
+@pytest.mark.asyncio
+async def test_load_script_md_integration(tmp_path, mock_rewriter):
     # Setup
-    mock_instance = mock_rewriter.return_value
-    mock_instance.rewrite.return_value = {
+    # Mock the rewriter.rewrite method to return a dict directly
+    mock_rewriter.return_value = {
         "scenes": [
             {
                 "scene_id": "s2",
@@ -54,17 +62,19 @@ def test_load_script_md_integration(tmp_path, mock_rewriter):
     file_path.write_text("Markdown Content")
     
     # Execution
-    scenes = load_script(str(file_path))
+    scenes = await load_script(str(file_path))
     
     # Verification
+    # Ensure rewrite was called once
     mock_rewriter.assert_called_once()
-    mock_instance.rewrite.assert_called_once_with("Markdown Content")
     assert len(scenes) == 1
     assert scenes[0].scene_id == "s2"
+    assert scenes[0].duration == 10.0
 
-def test_load_script_unsupported(tmp_path):
+@pytest.mark.asyncio
+async def test_load_script_unsupported(tmp_path):
     file_path = tmp_path / "image.png"
     file_path.touch()
     
     with pytest.raises(ValueError, match="Unsupported file format"):
-        load_script(str(file_path))
+        await load_script(str(file_path))

@@ -13,6 +13,15 @@ class LLMClient:
         """
         调用大模型生成代码
         """
+        return self._call_llm(system_prompt, user_prompt, temperature=0.2)
+
+    def generate_text(self, system_prompt: str, user_prompt: str) -> str:
+        """
+        调用大模型生成普通文本 (如 Plan)
+        """
+        return self._call_llm(system_prompt, user_prompt, temperature=0.5)
+
+    def _call_llm(self, system_prompt: str, user_prompt: str, temperature: float) -> str:
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -20,10 +29,9 @@ class LLMClient:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.2, # 代码生成需要低温度以保证准确性
+                temperature=temperature,
                 max_tokens=2000
             )
             return response.choices[0].message.content
         except Exception as e:
-            # 实际生产中应加入重试逻辑 (tenacity)
             return f"# LLM Call Error: {str(e)}"

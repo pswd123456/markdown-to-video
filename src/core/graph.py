@@ -9,18 +9,40 @@ from src.components.linter import CodeLinter
 from src.components.renderer import ManimRunner
 from src.components.critic import VisionCritic 
 from src.llm.client import LLMClient
+from src.llm.prompts import build_planner_system_prompt, build_code_user_prompt
 from src.utils.code_ops import extract_code
 
 class ManimGraph:
     def __init__(self):
         self.context_builder = ContextBuilder()
-        self.llm = LLMClient()
+        # 实例化两个不同的 Client
+        self.planner_llm = LLMClient(model=settings.PLANNER_MODEL)
+        self.coder_llm = LLMClient(model=settings.CODER_MODEL) 
+        
         self.linter = CodeLinter()
         self.runner = ManimRunner()
         self.critic = VisionCritic() 
         
         self.MAX_SYNTAX_RETRIES = 3
         self.MAX_VISUAL_RETRIES = 2 # 视觉修正比较贵，试2次即可
+
+    # --- New Node: Planner ---
+    def node_plan_layout(self, state: GraphState) -> Dict[str, Any]:
+        print("🤔 [Node: Planner] Thinking about layout...")
+        
+        # 如果是视觉重试(Visual Retry)，且 Critic 已经给出了具体的修改建议，
+        # 我们可以跳过 Planner 或让 Planner 基于建议重写。
+        # 简单策略：如果是 Visual Retry，直接沿用旧 Plan 或让 Critic 指导 Coder。
+        # 这里演示：始终生成 Plan (或者你可以加逻辑判断是否复用)
+        
+        scene = state["scene_spec"]
+        sys_prompt = build_planner_system_prompt()
+        user_prompt = f"Scene Description: {scene.description}\nElements: {scene.elements}"
+        
+        plan = self.planner_llm.generate_text(sys_prompt, user_prompt)
+        print(f"   ─ Plan generated: {plan[:50]}...")
+        
+        return {"layout_plan": plan}
 
     # --- Node: Generate ---
     def node_generate_code(self, state: GraphState) -> Dict[str, Any]:
@@ -45,10 +67,16 @@ class ManimGraph:
             feedback_context=feedback
         )
 
+        # 获取 Plan
+        plan = state.get("layout_plan", "No specific plan provided.")
+
+        # 构建包含 Plan 的 Prompt
         sys_prompt = self.context_builder.build_system_prompt()
-        user_prompt = self.context_builder.build_user_prompt(req)
+        # 使用 build_code_user_prompt 并传入 plan
+        user_prompt = build_code_user_prompt(req, plan)
         
-        raw_resp = self.llm.generate_code(sys_prompt, user_prompt)
+        # 使用 coder_llm 调用
+        raw_resp = self.coder_llm.generate_code(sys_prompt, user_prompt)
         new_code = extract_code(raw_resp)
 
         return {"code": new_code}
@@ -78,7 +106,7 @@ class ManimGraph:
         
         # 极端情况：渲染成功但没图 (ffmpeg bug?)
         if not artifact or not artifact.last_frame_path or artifact.last_frame_path == "N/A":
-             print("   ⚠️ No image found to critique.")
+             print("   ─ No image found to critique.")
              return {"critic_feedback": None} # Skip critique
 
         feedback = self.critic.review_layout(artifact.last_frame_path, state["scene_spec"])
@@ -100,7 +128,7 @@ class ManimGraph:
             code_path = debug_dir / f"scene_{scene_id}_failed_vis_retry_{vis_try}.py"
             with open(code_path, "w", encoding="utf-8") as f:
                 f.write(state["code"] or "")
-            print(f"   💾 Saved erroneous code to {code_path}")
+            print(f"   ─ Saved erroneous code to {code_path}")
 
             return {"critic_feedback": feedback.suggestion, "critic_score": feedback.score}
 
@@ -131,7 +159,7 @@ class ManimGraph:
         
         # Optimization: Skip expensive visual critique if we can't retry anyway
         if state.get("visual_retries", 0) >= self.MAX_VISUAL_RETRIES:
-            print("   ⛔ Max visual retries reached. Skipping final critic check.")
+            print("   ─ Max visual retries reached. Skipping final critic check.")
             return "finish"
 
         return "critic"
@@ -141,7 +169,7 @@ class ManimGraph:
             return "finish" # 没意见，或者通过了
         
         if state.get("visual_retries", 0) >= self.MAX_VISUAL_RETRIES:
-            print("   ⛔ Max visual retries reached. Accepting result as is.")
+            print("   ─ Max visual retries reached. Accepting result as is.")
             return "finish" # 累了，就这样吧
             
         return "retry_visual"
@@ -149,8 +177,9 @@ class ManimGraph:
     # --- Compile ---
     def compile(self):
         workflow = StateGraph(GraphState)
-
+        
         # Add Nodes
+        workflow.add_node("plan", self.node_plan_layout) # 新节点
         workflow.add_node("generate", self.node_generate_code)
         workflow.add_node("lint", self.node_check_syntax)
         workflow.add_node("render", self.node_render)
@@ -161,7 +190,13 @@ class ManimGraph:
         workflow.add_node("failed", lambda x: print("Workflow Failed"))
 
         # Define Flows
-        workflow.set_entry_point("generate")
+        # 入口改为 Plan
+        workflow.set_entry_point("plan")
+        
+        # Plan -> Generate
+        workflow.add_edge("plan", "generate")
+        
+        # Generate -> Lint
         workflow.add_edge("generate", "lint")
         
         # 路由 1: 语法检查
@@ -192,7 +227,12 @@ class ManimGraph:
                 "retry_visual": "prep_vis"
             }
         )
-        workflow.add_edge("prep_vis", "generate") # 带着视觉反馈回到生成器
+        
+        # ⚠️ 关键路由逻辑调整：重试循环
+        # 当发生 Visual Retry 时，通常不需要重新规划布局(Plan)，
+        # 而是带着 Critic 的反馈直接回 Coder 修改。
+        # 所以 prep_vis 应该连回 generate，而不是 plan。
+        workflow.add_edge("prep_vis", "generate") 
         workflow.add_edge("failed", END)
 
         return workflow.compile()

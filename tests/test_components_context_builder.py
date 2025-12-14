@@ -13,7 +13,6 @@ class TestContextBuilder(unittest.TestCase):
         prompt = builder.build_system_prompt()
         
         self.assertIn('font="Noto Sans CJK SC"', prompt)
-        self.assertIn('support Chinese characters', prompt)
 
 if __name__ == '__main__':
     unittest.main()

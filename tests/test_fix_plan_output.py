@@ -1,20 +1,16 @@
 # tests/test_fix_plan_output.py
 import pytest
-from unittest.mock import MagicMock, patch
-from pathlib import Path
-import json
+from unittest.mock import patch
 
 from src.core.graph import ManimGraph
 from src.core.state import GraphState
 from src.core.models import SceneSpec
+from src.core.config import settings
 
 @pytest.fixture
-def manim_graph_instance():
+def manim_graph_instance(tmp_path, monkeypatch):
     with patch('src.llm.client.LLMClient') as MockLLMClient, \
-         patch('src.components.context_builder.ContextBuilder') as MockContextBuilder, \
-         patch('src.components.linter.CodeLinter') as MockCodeLinter, \
-         patch('src.components.renderer.ManimRunner') as MockManimRunner, \
-         patch('src.components.critic.VisionCritic') as MockVisionCritic:
+         patch('src.components.context_builder.ContextBuilder') as MockContextBuilder:
         
         # Configure mocks
         mock_llm_client = MockLLMClient.return_value
@@ -24,6 +20,11 @@ def manim_graph_instance():
         mock_context_builder.api_stubs = "mock_api_stubs"
         mock_context_builder.examples = "mock_examples"
 
+        # Patch settings.OUTPUT_DIR
+        mock_output = tmp_path / "output"
+        mock_output.mkdir()
+        monkeypatch.setattr(settings, "OUTPUT_DIR", mock_output)
+
         # Instantiate ManimGraph
         graph = ManimGraph()
         graph.planner_llm = mock_llm_client # Ensure the actual instance uses the mock
@@ -32,10 +33,6 @@ def manim_graph_instance():
 def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
     graph, mock_llm_client = manim_graph_instance
     
-    # Override FIX_PLAN_OUTPUT_DIR to use a temporary directory for testing
-    graph.FIX_PLAN_OUTPUT_DIR = tmp_path / "fix_plan"
-    graph.FIX_PLAN_OUTPUT_DIR.mkdir()
-
     scene_spec = SceneSpec(
         scene_id="test_scene", 
         description="a test scene", 
@@ -48,7 +45,8 @@ def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
         code="some code",
         layout_plan="initial plan",
         error_log="some error",
-        visual_retries=0
+        visual_retries=0,
+        retries=0, # Added missing field
     )
 
     # Call the node_analyze_error function
@@ -59,23 +57,21 @@ def test_fix_plan_saves_to_file(manim_graph_instance, tmp_path):
     assert result["fix_instructions"] == "Mock fix instructions"
 
     # Assert that a file was created in the temporary directory
-    expected_file = graph.FIX_PLAN_OUTPUT_DIR / f"{scene_spec.scene_id}_fix_v{state['visual_retries']}.json"
+    expected_file_dir = settings.OUTPUT_DIR / "fix_plan"
+    expected_file = expected_file_dir / f"{scene_spec.scene_id}_fix_v{state['visual_retries']}_s{state['retries']}.md"
     assert expected_file.exists()
 
     # Read the content and assert it's correct
     with open(expected_file, "r", encoding="utf-8") as f:
-        content = json.load(f)
+        content = f.read()
     
-    assert content["error_context"] == "Runtime/Syntax Error: some error"
-    assert content["fix_instructions"] == "Mock fix instructions"
+    expected_error_context = "EXECUTION TRACEBACK:\nsome error"
+    expected_content = f"# Fix Plan (Runtime_Linter)\n\n## Input Error Context\n{expected_error_context}\n\n## Generated Instructions\nMock fix instructions"
+    assert content == expected_content
 
 def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
     graph, mock_llm_client = manim_graph_instance
     
-    # Override FIX_PLAN_OUTPUT_DIR to use a temporary directory for testing
-    graph.FIX_PLAN_OUTPUT_DIR = tmp_path / "fix_plan"
-    graph.FIX_PLAN_OUTPUT_DIR.mkdir()
-
     scene_spec = SceneSpec(
         scene_id="another_scene", 
         description="another test scene",
@@ -88,7 +84,8 @@ def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
         code="some code",
         layout_plan="initial plan",
         critic_feedback="visual feedback",
-        visual_retries=1
+        visual_retries=1,
+        retries=0, # Added missing field
     )
 
     # Call the node_analyze_error function
@@ -99,12 +96,14 @@ def test_fix_plan_saves_visual_retry_to_file(manim_graph_instance, tmp_path):
     assert result["fix_instructions"] == "Mock fix instructions"
 
     # Assert that a file was created in the temporary directory
-    expected_file = graph.FIX_PLAN_OUTPUT_DIR / f"{scene_spec.scene_id}_fix_v{state['visual_retries']}.json"
+    expected_file_dir = settings.OUTPUT_DIR / "fix_plan"
+    expected_file = expected_file_dir / f"{scene_spec.scene_id}_fix_v{state['visual_retries']}_s{state['retries']}.md"
     assert expected_file.exists()
 
     # Read the content and assert it's correct
     with open(expected_file, "r", encoding="utf-8") as f:
-        content = json.load(f)
+        content = f.read()
     
-    assert content["error_context"] == "Visual QA Failed: visual feedback"
-    assert content["fix_instructions"] == "Mock fix instructions"
+    expected_error_context = "VISUAL REPORT FROM QA:\nvisual feedback\n(Note: Translate this visual issue into Manim API corrections)"
+    expected_content = f"# Fix Plan (Visual_Critic)\n\n## Input Error Context\n{expected_error_context}\n\n## Generated Instructions\nMock fix instructions"
+    assert content == expected_content

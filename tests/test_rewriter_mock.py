@@ -74,4 +74,4 @@ def test_rewrite_prompt_content(mock_llm_client):
     assert "Intro" in sys_prompt
     assert "Summary" in sys_prompt
     assert "Chinese" in sys_prompt
-    assert "60 seconds" in sys_prompt
+    assert "Duration: Approx 60s total." in sys_prompt

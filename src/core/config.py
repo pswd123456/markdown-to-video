@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # LLM Configuration
     DASHSCOPE_API_KEY: str
     DASHSCOPE_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    CODER_MODEL: str = "qwen3-coder-plus"     # 写代码的模型
+    CODER_MODEL: str = "qwen3-max"     # 写代码的模型
     CRITIC_MODEL: str = "qwen-vl-max"         # 看图的模型 (Vision)
     REWRITER_MODEL: str = "qwen3-max"
     PLANNER_MODEL: str = "qwen3-max"

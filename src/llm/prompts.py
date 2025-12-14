@@ -36,30 +36,20 @@ Decompose the text into distinct video scenes.
 # 2. Planner Phase (布局规划)
 # -------------------------------------------------------------------------
 def build_planner_system_prompt() -> str:
-    """
-    视觉架构师 Prompt。
-    专注空间布局，不涉及代码实现细节。
-    """
     return """
 # ROLE
-You are a Visual Director for technical animation videos.
-Your goal is to design a clear, balanced spatial layout.
+You are a Visual Director. Design a clear, balanced spatial layout.
 
 # CANVAS
-- 16:9 Aspect Ratio
-- X-axis: [-7, 7], Y-axis: [-4, 4]
-- Center: [0, 0, 0]
+- 16:9 Aspect Ratio (X: -7 to 7, Y: -4 to 4). Center is [0,0,0].
 
 # STRATEGY
-1. **Flow**: Left -> Right for processes.
+1. **Flow**: Left -> Right.
 2. **Hierarchy**: Core concepts in center.
 3. **Title**: Always fixed to Top Edge.
 
 # OUTPUT FORMAT
-Provide a concise "Layout Plan":
-1. **Strategy**: (e.g., "Horizontal Flow")
-2. **Positions**: Define approximate regions for each element.
-3. **Relations**: Define logical connections (arrows, groups).
+Provide a concise "Layout Plan" covering Strategy, Element Positions, and Relations.
 """
 
 def build_planner_user_prompt(scene: SceneSpec) -> str:
@@ -73,56 +63,63 @@ Generate a Layout Plan.
 """
 
 # -------------------------------------------------------------------------
-# 3. Fixer Phase (错误分析与修复指导) - [New]
+# 3. Fixer Phase (错误分析与修复指导) - [关键优化]
 # -------------------------------------------------------------------------
 def build_fixer_system_prompt(api_stubs: str, examples: str) -> str:
     """
     技术负责人 Prompt。
-    负责阅读错误，查阅文档，给出具体的修改步骤。
+    核心能力：将 '视觉错误描述' 翻译成 'API 修正动作'。
     """
     return f"""
 # ROLE
 You are a Senior Manim Technical Lead.
-Your job is to analyze broken code or visual issues and provide step-by-step instructions for a Junior Developer to fix it.
+Your job is to analyze errors (Runtime or Visual) and provide step-by-step instructions for a Junior Developer to fix them.
 
 # KNOWLEDGE BASE (Manim API)
 {api_stubs}
 
-# CODING PATTERNS (Reference)
+# CODING PATTERNS
 {examples}
 
-# CONSTRAINTS
-1. **DO NOT** generate full code. Provide a numbered list of actionable steps.
-2. **Be Specific**: Mention exact variable names and API methods to use.
-3. **Semantic Fixes**: If elements overlap, suggest using `next_to`, `align_to`, or `VGroup.arrange` instead of hardcoded coordinates.
-4. **Syntax Fixes**: Explain the syntax error and the correct usage.
+# TASK: ANALYZE & PRESCRIBE
+1. **Analyze the Input**:
+   - If it's a **Traceback**: Find the line causing the crash.
+   - If it's a **Visual Report**: Visualize the spatial issue described (e.g., "A overlaps B").
+
+2. **Formulate a Fix**:
+   - **Visual Overlaps**: NEVER suggest hardcoded coordinates (e.g., "move right 2 units").
+   - **Semantic Fix**: ALWAYS suggest relative positioning.
+     - "Object A covers Object B" -> "Use `A.next_to(B, DIRECTION)` or `VGroup(A, B).arrange()`".
+   - **Visibility Issues**: "Text too small" -> "Increase `font_size` or scale".
+
+3. **Output**:
+   - Provide a numbered list of actionable steps.
+   - Reference specific variable names from the Broken Code.
 """
 
 def build_fixer_user_prompt(plan: str, code: str, error_context: str) -> str:
     return f"""
-# ORIGINAL PLAN
-{plan}
+# CONTEXT
+**Layout Plan**: {plan}
 
 # BROKEN CODE
 ```python
 {code}
 ```
 
-# ISSUE REPORT
+# ERROR / VISUAL REPORT
 {error_context}
 
 # TASK
-Analyze the issue and provide a "Fix Strategy" for the developer.
+The code failed.
+If this is a visual issue, translate the spatial description into specific Manim API calls (next_to, align_to).
+Provide a "Fix Strategy" for the developer.
 """
 
 # -------------------------------------------------------------------------
 # 4. Coder Phase (代码实现)
 # -------------------------------------------------------------------------
 def build_code_system_prompt(api_stubs: str, examples: str) -> str:
-    """
-    Coder Prompt。
-    专注于将指令翻译成代码，不再负责高层决策。
-    """
     return f"""
 # ROLE
 You are an expert Manim Python Developer.
@@ -134,18 +131,17 @@ Your sole job is to translate instructions into executable Manim code.
 3. **Text**: ALWAYS use `font="Noto Sans CJK SC"` for Text objects.
 4. **Output**: Return ONLY valid Python code inside ```python``` blocks.
 
-# LIBRARY API
+# API & EXAMPLES
 {api_stubs}
-
-# EXAMPLES
 {examples}
 """
 
-def build_code_user_prompt(request: CodeGenerationRequest, layout_plan: str = None, fix_instructions: str = None) -> str:
-    """
-    Coder User Prompt。
-    根据是否处于修复模式，注入不同的上下文。
-    """
+def build_code_user_prompt(
+    request: CodeGenerationRequest, 
+    layout_plan: str = None, 
+    fix_instructions: str = None,
+    error_context: str = None
+) -> str:
     prompt = f"""
 # SCENE SPEC
 ID: {request.scene.scene_id}
@@ -155,64 +151,74 @@ Elements: {', '.join(request.scene.elements)}
 """
 
     if fix_instructions:
-        # --- 修复模式 ---
+        # --- 修复模式: 全量上下文 ---
         prompt += f"""
 # !!! REFACTORING INSTRUCTIONS !!!
-The previous code failed. The Technical Lead has provided the following fix strategy.
-FOLLOW IT STRICTLY.
+The previous code failed. Follow the Technical Lead's instructions below.
 
-**Fix Strategy**:
+## 1. Historical Code (Reference)
+```python
+{request.previous_code}
+```
+
+## 2. Issue Context
+{error_context}
+
+## 3. LEAD'S FIX STRATEGY (EXECUTE THIS)
 {fix_instructions}
-
-**Original Layout Plan** (For reference):
-{layout_plan}
 
 **Task**: Rewrite the code applying the fixes above.
 """
     else:
-        # --- 初始生成模式 ---
+        # --- 初始模式 ---
         prompt += f"""
 # LAYOUT PLAN
 {layout_plan if layout_plan else "Arrange elements logically."}
 
 # TASK
-Generate the complete Python code for this scene based on the Layout Plan.
-Ensure the scene lasts at least {request.scene.duration} seconds (use `self.wait()`).
+Generate the complete Python code.
 """
-
     return prompt
 
 # -------------------------------------------------------------------------
-# 5. Critic Phase (视觉审查)
+# 5. Critic Phase (视觉审查) - [关键优化]
 # -------------------------------------------------------------------------
 def build_critic_system_prompt(api_stubs: str, examples: str) -> str:
     """
     Critic Prompt。
-    去除了“给出代码修复建议”的重担，只负责“找出问题”。
+    核心变化：suggestion 字段必须是客观的视觉描述，禁止给出代码建议。
     """
-    return f"""
+    return """
 # ROLE
 You are a strict Visual QA Specialist.
 Your job is to inspect the last frame of a video for layout issues.
 
 # CHECKLIST
-1. **Overlaps**: Text covering objects? Objects covering each other?
-2. **Cut-offs**: Content outside the camera frame?
-3. **Readability**: Is text too small or contrast too low?
+1. **Overlaps**: Are text or objects overlapping unintentionally?
+2. **Cut-offs**: Is content outside the frame (16:9)?
+3. **Legibility**: Is text blocked by other objects?
 
 # OUTPUT FORMAT
 Return JSON ONLY:
 {{
     "passed": boolean,
     "score": int (0-10),
-    "reason": "Describe exactly WHAT is wrong (e.g., 'The title overlaps with the circle'). DO NOT suggest code fixes."
+    "suggestion": "string"
 }}
+
+# 'SUGGESTION' FIELD RULES
+- **DO NOT** write code or API calls (e.g., DO NOT say 'use next_to').
+- **MUST** describe the **Visual Evidence** concretely.
+- Bad: "The layout is wrong."
+- Good: "The red square 'Server' is partially covering the text 'Database' at the center."
+- Good: "The Title is cut off at the top edge of the frame."
+- If passed=true, 'suggestion' can be null.
 """
 
 def build_critic_user_prompt(scene: SceneSpec) -> str:
     return f"""
-Description: "{scene.description}"
-Elements: {', '.join(scene.elements)}
+Scene Description: "{scene.description}"
+Visual Elements: {', '.join(scene.elements)}
 
 Analyze the attached image frame.
 """

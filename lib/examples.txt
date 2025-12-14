@@ -1,69 +1,69 @@
-Example 1: Structured Layout with VGroup
-Input: "Display three steps: Input, Process, Output horizontally."
-Code:
-```python
+# Example 1: Standard Layout (Title + Center Content)
+# Input: "Show a title 'Binary Search' at the top, and a number array in the center."
 from manim import *
-class GenScene(Scene):
+
+class StandardLayoutScene(Scene):
     def construct(self):
-        # 1. Create Title
-        title = Text("Data Flow", font="Noto Sans CJK SC", font_size=48, color=BLUE)
-        title.to_edge(UP) # Fix to top edge
+        # 1. Title (Always fixed to top edge with buffer)
+        title = Text("二分查找", font="Noto Sans CJK SC", font_size=48, color=BLUE)
+        title.to_edge(UP, buff=0.5)
         
-        # 2. Create Elements
-        t1 = Text("Input", font="Noto Sans CJK SC")
-        t2 = Text("Process", font="Noto Sans CJK SC")
-        t3 = Text("Output", font="Noto Sans CJK SC")
+        # 2. Main Content (Centered by default)
+        content = Text("[1, 3, 5, 7, 9]", font="Noto Sans CJK SC", font_size=60)
+        content.move_to(ORIGIN) 
         
-        # 3. Use VGroup for layout (Auto-spacing)
-        group = VGroup(t1, t2, t3)
-        group.arrange(RIGHT, buff=2.0) # Automatically arrange horizontally
-        group.move_to(ORIGIN) # Center the whole group
-        
-        # 4. Add visual flair (Arrows)
-        arrow1 = Arrow(t1.get_right(), t2.get_left(), color=GREY)
-        arrow2 = Arrow(t2.get_right(), t3.get_left(), color=GREY)
-        
+        # 3. Animation Sequence
         self.play(Write(title))
-        self.play(FadeIn(group))
-        self.play(GrowArrow(arrow1), GrowArrow(arrow2))
+        self.play(FadeIn(content, shift=UP)) # Subtle entry animation
         self.wait(2)
-```
 
-Example 2: Focusing on Content Input: "Highlight the database server." 
-Code:
-```python
+# Example 2: Flow & Relations (Relative Positioning)
+# Input: "Show the data flow from Client to Server with an arrow."
 from manim import *
-class GenScene(Scene):
-    def construct(self):
-        server = Square(color=TEAL, fill_opacity=0.5)
-        label = Text("Server", font="Noto Sans CJK SC", font_size=36).next_to(server, DOWN)
-        
-        self.add(server, label)
-        self.wait(0.5)
-        
-        # Highlight logic
-        box = SurroundingRectangle(server, color=YELLOW, buff=0.2)
-        self.play(Create(box))
-        self.play(Indicate(server)) # Flash highlight
-        self.wait(1)
-```
 
-Example 3: Defensive Layout for Multiple Items 
-Input: "Show 4 distinct concepts without overlapping."
-```python
-from manim import *
-class SafeLayoutScene(Scene):
+class FlowScene(Scene):
     def construct(self):
-        # Create elements
-        items = VGroup(*[Text(f"Item {i}", font="Noto Sans CJK SC") for i in range(4)])
+        # 1. Define Entities
+        # Use VGroup to encapsulate Text + Shape if needed
+        client = Text("Client", font="Noto Sans CJK SC", color=TEAL)
+        server = Text("Server", font="Noto Sans CJK SC", color=ORANGE)
         
-        # KEY: Use arrange_in_grid for safety instead of manual shifts
-        items.arrange_in_grid(rows=2, cols=2, buff=1.0)
+        # 2. Layout Strategy: Arrange horizontally with sufficient buffer
+        # This prevents overlap regardless of text length
+        group = VGroup(client, server)
+        group.arrange(RIGHT, buff=4.0)
+        group.move_to(ORIGIN)
         
-        # Ensure the whole group fits in screen height (height=7.0 is safe buffer)
-        if items.height > 7.0:
-            items.scale_to_fit_height(7.0)
-            
-        items.move_to(ORIGIN)
-        self.add(items)
-```
+        # 3. Dynamic Connector (Arrow relies on object boundaries)
+        arrow = Arrow(start=client.get_right(), end=server.get_left(), color=WHITE)
+        label = Text("Request", font="Noto Sans CJK SC", font_size=24).next_to(arrow, UP)
+        
+        # 4. Sequence
+        self.add(client, server)
+        self.play(GrowArrow(arrow), Write(label))
+        self.play(Indicate(server)) # Visual feedback for emphasis
+        self.wait(2)
+
+# Example 3: List/Grid Display (Auto-Alignment)
+# Input: "List three advantages: Fast, Secure, Scalable."
+from manim import *
+
+class ListScene(Scene):
+    def construct(self):
+        # 1. Define items
+        items_text = ["速度快", "安全性高", "可扩展"]
+        
+        # 2. Create Mobjects using list comprehension
+        mobjects = [Text(f"{i+1}. {text}", font="Noto Sans CJK SC", font_size=36) for i, text in enumerate(items_text)]
+        
+        # 3. Use VGroup for layout management
+        list_group = VGroup(*mobjects)
+        # aligned_edge=LEFT ensures texts start at the same x-coordinate
+        list_group.arrange(DOWN, buff=0.5, aligned_edge=LEFT) 
+        list_group.move_to(ORIGIN)
+        
+        # 4. Animate one by one using a loop
+        for item in list_group:
+            self.play(FadeIn(item, shift=RIGHT), run_time=0.8)
+        
+        self.wait(2)

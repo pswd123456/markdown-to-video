@@ -122,6 +122,22 @@ class ManimGraph:
         
         # Async call
         instructions = await self.planner_llm.generate_text(sys_prompt, user_prompt)
+
+        # --- [Add] Save Fix Plan ---
+        try:
+            scene = state["scene_spec"]
+            vis_try = state.get("visual_retries", 0)
+            syn_try = state.get("retries", 0)
+            
+            fix_dir = settings.OUTPUT_DIR / "fix_plan"
+            fix_dir.mkdir(parents=True, exist_ok=True)
+            
+            filename = f"{scene.scene_id}_fix_v{vis_try}_s{syn_try}.md"
+            with open(fix_dir / filename, "w", encoding="utf-8") as f:
+                f.write(f"# Fix Plan (Runtime_Linter/Visual_Critic)\n\n## Input Error Context\n{error_context}\n\n## Generated Instructions\n{instructions}")
+        except Exception as e:
+            logger.warning(f"Failed to save fix plan: {e}")
+
         return {"fix_instructions": instructions}
 
     # --- Node 3: Coder ---
@@ -150,6 +166,21 @@ class ManimGraph:
         raw_resp = await self.coder_llm.generate_code(sys_prompt, user_prompt)
         new_code = extract_code(raw_resp)
 
+        # --- [Add] Save Generated Code ---
+        try:
+            scene = state["scene_spec"]
+            vis_try = state.get("visual_retries", 0)
+            syn_try = state.get("retries", 0)
+            
+            code_dir = settings.OUTPUT_DIR / "scenes_code"
+            code_dir.mkdir(parents=True, exist_ok=True)
+            
+            filename = f"{scene.scene_id}_code_v{vis_try}_s{syn_try}.py"
+            with open(code_dir / filename, "w", encoding="utf-8") as f:
+                f.write(new_code)
+        except Exception as e:
+            logger.warning(f"Failed to save generated code: {e}")
+
         return {"code": new_code}
 
     # --- Node 4: Lint (CPU Bound) ---
@@ -165,11 +196,20 @@ class ManimGraph:
     async def node_render(self, state: GraphState) -> Dict[str, Any]:
         scene_id = state["scene_spec"].scene_id
         vis_try = state.get("visual_retries", 0)
+        # 这里的 render_id 仅用于生成文件名，避免重试时覆盖旧文件
         render_id = f"{scene_id}_v{vis_try}" if vis_try > 0 else scene_id
 
         try:
             # 使用新的 render_async 方法 (带信号量)
             artifact = await self.runner.render_async(state["code"], render_id)
+            
+            # 【关键修复】: 
+            # 无论 render_id 是什么（例如 "scene_01_v1"），
+            # 这里的 artifact.scene_id 必须还原为原始 ID ("scene_01")。
+            # 这样 Assembler 才能根据 "scene_01" 找到 "scene_01.mp3"。
+            if artifact:
+                artifact.scene_id = scene_id
+            
             return {"artifact": artifact, "error_log": None}
         except Exception as e:
             return {"error_log": str(e), "artifact": None}
@@ -190,6 +230,22 @@ class ManimGraph:
             state["scene_spec"]
         )
         
+        # --- [Add] Save Critic Report ---
+        try:
+            scene = state["scene_spec"]
+            vis_try = state.get("visual_retries", 0)
+            
+            critic_dir = settings.OUTPUT_DIR / "critic"
+            critic_dir.mkdir(parents=True, exist_ok=True)
+            
+            filename = f"{scene.scene_id}_critic_v{vis_try}.txt"
+            content = f"Passed: {feedback.passed}\nScore: {feedback.score}\nEvidence: {feedback.suggestion}"
+            
+            with open(critic_dir / filename, "w", encoding="utf-8") as f:
+                f.write(content)
+        except Exception as e:
+            logger.warning(f"Failed to save critic report: {e}")
+
         visual_evidence = feedback.suggestion if feedback.suggestion else "Visual check failed."
 
         if feedback.passed:

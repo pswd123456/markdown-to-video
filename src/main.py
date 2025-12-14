@@ -69,7 +69,8 @@ async def async_main():
     logger.info(f"⚡ Dispatching {len(scenes)} scenes in parallel...")
     try:
         # ainvoke 启动异步执行
-        final_state = await app.ainvoke(initial_state)
+        run_config = {"recursion_limit": 100}
+        final_state = await app.ainvoke(initial_state, config=run_config)
         artifacts = final_state.get("output_artifacts", [])
         
         logger.info(f"✅ Workflow finished. Collected {len(artifacts)} artifacts.")

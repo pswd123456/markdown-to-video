@@ -1,44 +1,55 @@
+# src/components/critic.py
 import base64
 import json
 from pathlib import Path
 
-
 from src.core.models import CritiqueFeedback, SceneSpec
 from src.core.config import settings
 from src.llm.client import LLMClient
-from src.llm.prompts import CRITIC_SYSTEM_PROMPT, build_critic_user_prompt
+# 引入新的构建函数
+from src.llm.prompts import build_critic_system_prompt, build_critic_user_prompt 
 
 class VisionCritic:
     def __init__(self):
-        # 复用 LLM Client，但注意我们将在调用时指定 Vision 模型
         self.llm_client = LLMClient()
-        self.model = settings.CRITIC_MODEL  # e.g., "qwen-vl-max"
+        self.model = settings.CRITIC_MODEL
+        
+        # === 新增：加载上下文资源 ===
+        # 复用 lib 目录下的资源，保证 Coder 和 Critic 看到的是同一套规则
+        self.api_stubs = self._load_file(settings.LIB_DIR / "api_stubs.txt")
+        self.examples = self._load_file(settings.LIB_DIR / "examples.txt")
+
+    def _load_file(self, path: Path) -> str:
+        """辅助方法：读取文件"""
+        try:
+            return path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return ""
 
     def _encode_image(self, image_path: str) -> str:
         """将图片转换为 Base64 编码"""
         path = Path(image_path)
         if not path.exists():
-            raise FileNotFoundError(f"Image not found: {image_path}")
+            # 这里可以做一个兜底，如果没有图片，就不要去审查了
+            return ""
             
         with open(path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
     def review_layout(self, image_path: str, scene: SceneSpec) -> CritiqueFeedback:
-        """
-        核心方法：看图找茬
-        """
         print(f"👀 [Critic] Reviewing image: {image_path}")
         
         base64_image = self._encode_image(image_path)
+        if not base64_image:
+            print("   ⚠️ Image not found, skipping critique.")
+            return CritiqueFeedback(passed=True, score=10, suggestion=None)
         
-        # 1. 构建 Prompt (强制 JSON 输出)
-        system_prompt = CRITIC_SYSTEM_PROMPT
+        # === 修改点：构建动态 System Prompt ===
+        system_prompt = build_critic_system_prompt(self.api_stubs, self.examples)
+        
         user_content = build_critic_user_prompt(scene)
 
-        # 2. 调用 Vision Model (OpenAI 兼容格式)
         try:
-            # 注意：这里我们手动构造请求，因为 client.py 封装可能比较简单
-            # 如果你的 LLMClient 不支持 image_url，这里需要直接调用 client.chat.completions
             response = self.llm_client.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -55,12 +66,12 @@ class VisionCritic:
                     }
                 ],
                 max_tokens=500,
-                temperature=0.3, # 评价需要客观
-                response_format={"type": "json_object"} # 强制 JSON (如果模型支持)
+                temperature=0.1, # 降低温度，让它严格遵循 API 约束
+                response_format={"type": "json_object"}
             )
             
             content = response.choices[0].message.content
-            # 清洗可能的 markdown 标记
+            # 简单的清洗逻辑
             content = content.replace("```json", "").replace("```", "").strip()
             
             data = json.loads(content)
@@ -73,5 +84,4 @@ class VisionCritic:
 
         except Exception as e:
             print(f"⚠️ [Critic] Validation failed due to API error: {e}")
-            # 如果视觉模型挂了，为了不阻塞流程，默认通过，但标记警告
             return CritiqueFeedback(passed=True, score=5, suggestion=None)

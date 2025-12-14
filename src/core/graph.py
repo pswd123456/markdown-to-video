@@ -7,7 +7,7 @@ from src.core.models import CodeGenerationRequest
 from src.components.context_builder import ContextBuilder
 from src.components.linter import CodeLinter
 from src.components.renderer import ManimRunner
-from src.components.critic import VisionCritic # <--- 新增
+from src.components.critic import VisionCritic 
 from src.llm.client import LLMClient
 from src.utils.code_ops import extract_code
 
@@ -17,10 +17,10 @@ class ManimGraph:
         self.llm = LLMClient()
         self.linter = CodeLinter()
         self.runner = ManimRunner()
-        self.critic = VisionCritic() # <--- 新增
+        self.critic = VisionCritic() 
         
         self.MAX_SYNTAX_RETRIES = 3
-        self.MAX_VISUAL_RETRIES = 1 # 视觉修正比较贵，试2次即可
+        self.MAX_VISUAL_RETRIES = 2 # 视觉修正比较贵，试2次即可
 
     # --- Node: Generate ---
     def node_generate_code(self, state: GraphState) -> Dict[str, Any]:

@@ -102,7 +102,7 @@ class ManimGraph:
                 f.write(state["code"] or "")
             print(f"   💾 Saved erroneous code to {code_path}")
 
-            return {"critic_feedback": feedback.suggestion}
+            return {"critic_feedback": feedback.suggestion, "critic_score": feedback.score}
 
     # --- Helper Nodes ---
     def node_prep_syntax_retry(self, state: GraphState):
@@ -137,7 +137,7 @@ class ManimGraph:
         return "critic"
 
     def edge_router_after_critic(self, state: GraphState) -> Literal["finish", "retry_visual"]:
-        if state.get("critic_feedback") is None:
+        if state.get("critic_feedback") is None or state.get("critic_score", 0) >= 7:
             return "finish" # 没意见，或者通过了
         
         if state.get("visual_retries", 0) >= self.MAX_VISUAL_RETRIES:

@@ -77,7 +77,10 @@ Here are examples of how to write valid positioning code:
 1. Overlaps: Are any text or objects overlapping unintentionally?
 2. Cut-offs: Is any content partially outside the frame (16:9 aspect ratio)?
 3. Alignment: Are items centered or aligned correctly relative to each other?
-4. Legibility: Is the text too small or low contrast?
+4. Fatal Errors Only:
+   - Is text illegible due to OVERLAP with other objects? (Critical)
+   - Is content CUT OFF by the screen edge? (Critical)
+   - Ignore minor aesthetic choices (colors, slight asymmetry) unless they break understanding.
 
 # OUTPUT FORMAT
 Return a JSON object ONLY (no markdown formatting, no explanation outside JSON):
@@ -94,6 +97,7 @@ Return a JSON object ONLY (no markdown formatting, no explanation outside JSON):
 - BAD SUGGESTION: "Use text.set_position(10, 10)." (Hallucinated API)
 - GOOD SUGGESTION: "The title is overlapping. Fix by using: title.next_to(circle, UP, buff=0.5)" (Valid API)
 - GOOD SUGGESTION: "The text is cut off. Fix by using: group.scale(0.8)" (Valid API)
+- DO NOT SUGGEST: "change the background color."
 """
 
 def build_code_system_prompt(api_stubs: str, examples: str) -> str:
@@ -122,6 +126,19 @@ Your goal is to write Python code using the 'manim' library to visualize the use
 4. Use `self.wait()` at the end.
 5. PREFER `next_to`, `align_to`, `to_edge`, `to_corner` over `move_to` with absolute numbers.
 6. For ANY text content, ALWAYS use `font="Noto Sans CJK SC"`.
+
+# INSTRUCTION:
+Before writing the Python code, you MUST write a short "Layout Plan" section inside specific XML tags <layout_plan>...</layout_plan>.
+1. List all visual elements.
+2. Decide the primary layout structure (e.g., Horizontal Flow, Grid 2x2, Central Hub).
+3. Define the relative positions (e.g., "A is left of B", "Title is fixed to top edge").
+
+example:
+<layout_plan>
+- Elements: Server, Database, User
+- Structure: Horizontal Flow (User -> Server -> Database)
+- Positioning: User at LEFT, Database at RIGHT, Server in CENTER. All aligned vertically to ORIGIN.
+</layout_plan>
 
 # AVAILABLE API (Strictly follow this subset)
 {api_stubs}

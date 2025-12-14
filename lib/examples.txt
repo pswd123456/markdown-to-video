@@ -47,3 +47,23 @@ class GenScene(Scene):
         self.play(Indicate(server)) # Flash highlight
         self.wait(1)
 ```
+
+Example 3: Defensive Layout for Multiple Items 
+Input: "Show 4 distinct concepts without overlapping."
+```python
+from manim import *
+class SafeLayoutScene(Scene):
+    def construct(self):
+        # Create elements
+        items = VGroup(*[Text(f"Item {i}", font="Noto Sans CJK SC") for i in range(4)])
+        
+        # KEY: Use arrange_in_grid for safety instead of manual shifts
+        items.arrange_in_grid(rows=2, cols=2, buff=1.0)
+        
+        # Ensure the whole group fits in screen height (height=7.0 is safe buffer)
+        if items.height > 7.0:
+            items.scale_to_fit_height(7.0)
+            
+        items.move_to(ORIGIN)
+        self.add(items)
+```

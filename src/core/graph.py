@@ -42,6 +42,18 @@ class ManimGraph:
         plan = self.planner_llm.generate_text(sys_prompt, user_prompt)
         print(f"   ─ Plan generated: {plan[:50]}...")
         
+        # Save plan to file
+        plan_dir = settings.OUTPUT_DIR / "plan"
+        plan_dir.mkdir(parents=True, exist_ok=True)
+        plan_path = plan_dir / f"scene_{scene.scene_id}_plan.md"
+        
+        try:
+            with open(plan_path, "w", encoding="utf-8") as f:
+                f.write(plan)
+            print(f"   💾 Saved plan to {plan_path}")
+        except Exception as e:
+            print(f"   ⚠️ Failed to save plan: {e}")
+        
         return {"layout_plan": plan}
 
     # --- Node: Generate ---
